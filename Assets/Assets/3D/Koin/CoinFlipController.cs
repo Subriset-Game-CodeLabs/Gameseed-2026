@@ -124,27 +124,25 @@ public class CoinFlipController : MonoBehaviour
             coinAnimator.SetTrigger("TossAngkaToAngka");
         }
 
-        // Tunggu animasi koin selesai
         yield return new WaitForSeconds(tossAnimationDuration);
 
         // 3. Tentukan siapa yang main duluan
         bool playerGoesFirst = (isPlayerChoosingGambar == coinLandedGambar);
 
-        // Simpan data ini agar bisa dibaca di scene selanjutnya menggunakan PlayerPrefs
+        // Simpan data, dibaca di scene gameplay menggunakan PlayerPrefs
         // 1 = True (Player First), 0 = False (Enemy First)
         PlayerPrefs.SetInt("PlayerGoesFirst", playerGoesFirst ? 1 : 0);
         PlayerPrefs.Save();
 
-        // 4. Play Animasi UI Result (Siapa yang main duluan)
+        // Play Animasi UI Result
         if (playerGoesFirst)
             uiResultAnimator.SetTrigger("PlayerFirst");
         else
             uiResultAnimator.SetTrigger("EnemyFirst");
 
-        // Tunggu animasi UI selesai
         yield return new WaitForSeconds(resultAnimationDuration);
 
-        // 5. Pindah ke Scene Gameplay
+        // Pindah ke Scene Gameplay
         SceneManager.LoadScene(gameplaySceneName);
     }
 }
