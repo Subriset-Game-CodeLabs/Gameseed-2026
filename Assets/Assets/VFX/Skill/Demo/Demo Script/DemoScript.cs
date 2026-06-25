@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
 namespace AlphaimeCorporationDemo
 {
     public class DemoScript : MonoBehaviour
@@ -11,12 +12,12 @@ namespace AlphaimeCorporationDemo
             transform.GetChild(ind).gameObject.SetActive(true);
         }
 
-
         private void Update()
         {
-            if (Input.GetKeyDown("q"))
+            // Menggunakan UnityEngine.Input untuk menghindari konflik nama
+            if (UnityEngine.Input.GetKeyDown("q"))
                 Previous();
-            else if (Input.GetKeyDown("w"))
+            else if (UnityEngine.Input.GetKeyDown("w"))
                 Next();
         }
 

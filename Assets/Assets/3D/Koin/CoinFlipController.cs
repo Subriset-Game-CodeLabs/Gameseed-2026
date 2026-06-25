@@ -29,10 +29,10 @@ public class CoinFlipController : MonoBehaviour
 
     void Update()
     {
-        // Deteksi klik mouse sebelah kiri
-        if (Input.GetMouseButtonDown(0) && !isFlipping && !hasConfirmed)
+        // Deteksi klik mouse sebelah kiri menggunakan UnityEngine.Input
+        if (UnityEngine.Input.GetMouseButtonDown(0) && !isFlipping && !hasConfirmed)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Ray ray = Camera.main.ScreenPointToRay(UnityEngine.Input.mousePosition);
             RaycastHit hit;
 
             // Jika Raycast mengenai 3D Koin
@@ -126,7 +126,7 @@ public class CoinFlipController : MonoBehaviour
 
         yield return new WaitForSeconds(tossAnimationDuration);
 
-        // 3. Tentukan siapa yang main duluan
+        // Penentuan siapa yang main duluan
         bool playerGoesFirst = (isPlayerChoosingGambar == coinLandedGambar);
 
         // Simpan data, dibaca di scene gameplay menggunakan PlayerPrefs
