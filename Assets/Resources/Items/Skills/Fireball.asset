@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillItem
   itemName: Fireball
   description: Lempar bola api ke lawan.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 145f7b253b8be4f4ea8842d568a38519, type: 3}
   price: 300
   category: 1
   itemType: 0

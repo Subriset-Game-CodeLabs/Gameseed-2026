@@ -52,6 +52,9 @@ public class ShopManager : MonoBehaviour
             closeButton.onClick.AddListener(CloseShop);
         }
 
+        // Fix layout issues (CanvasScaler, VLG settings, etc.)
+        FixLayout();
+
         // Wire up existing category buttons (already in scene)
         SetupExistingCategoryButtons();
 
@@ -61,6 +64,157 @@ public class ShopManager : MonoBehaviour
         // Open shop on first category
         gameObject.SetActive(true);
         SelectCategory(ItemCategory.Stick);
+
+        // Force layout rebuild after everything is set up
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(shopPanel.GetComponent<RectTransform>());
+    }
+
+    private void FixLayout()
+    {
+        // 1. Fix CategoryPanel VLG: enable childControlHeight
+        if (shopPanel != null)
+        {
+            Transform catPanelT = shopPanel.transform.Find("CategoryPanel");
+            if (catPanelT == null) catPanelT = FindDeepUnder(shopPanel.transform, "CategoryPanel");
+            if (catPanelT != null)
+            {
+                VerticalLayoutGroup vlg = catPanelT.GetComponent<VerticalLayoutGroup>();
+                if (vlg != null)
+                {
+                    vlg.childControlHeight = true;
+                    vlg.childControlWidth = true;
+                    vlg.childForceExpandHeight = false;
+                    vlg.childForceExpandWidth = true;
+                }
+            }
+        }
+
+        // 2. Fix CategoryButtonContainer: remove CSF, ensure VLG (vertical buttons, top-to-bottom)
+        if (categoryButtonParent != null)
+        {
+            // Remove ContentSizeFitter (causes conflicts with layout)
+            ContentSizeFitter csf = categoryButtonParent.GetComponent<ContentSizeFitter>();
+            if (csf != null)
+            {
+                Object.DestroyImmediate(csf);
+            }
+
+            // Remove HorizontalLayoutGroup if present (from old code)
+            HorizontalLayoutGroup oldHLG = categoryButtonParent.GetComponent<HorizontalLayoutGroup>();
+            if (oldHLG != null)
+            {
+                Object.DestroyImmediate(oldHLG);
+            }
+
+            // Add VerticalLayoutGroup if not present — buttons stack top-to-bottom
+            VerticalLayoutGroup containerVLG = categoryButtonParent.GetComponent<VerticalLayoutGroup>();
+            if (containerVLG == null)
+            {
+                containerVLG = categoryButtonParent.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
+            containerVLG.childControlHeight = true;
+            containerVLG.childControlWidth = true;
+            containerVLG.childForceExpandHeight = false;
+            containerVLG.childForceExpandWidth = true;
+            containerVLG.spacing = 8f;
+            containerVLG.padding = new RectOffset(5, 5, 5, 5);
+            containerVLG.childAlignment = TextAnchor.UpperCenter;
+
+            // Fix CategoryButtonContainer size to fill CategoryPanel
+            RectTransform containerRT = categoryButtonParent.GetComponent<RectTransform>();
+            if (containerRT != null)
+            {
+                containerRT.anchorMin = new Vector2(0, 0);
+                containerRT.anchorMax = new Vector2(1, 1);
+                containerRT.pivot = new Vector2(0.5f, 0.5f);
+                containerRT.sizeDelta = Vector2.zero;
+                containerRT.anchoredPosition = Vector2.zero;
+            }
+
+            // Fix each button's LayoutElement for vertical stacking
+            ShopCategoryButton[] btns = categoryButtonParent.GetComponentsInChildren<ShopCategoryButton>(true);
+            for (int i = 0; i < btns.Length; i++)
+            {
+                LayoutElement le = btns[i].GetComponent<LayoutElement>();
+                if (le == null)
+                {
+                    le = btns[i].gameObject.AddComponent<LayoutElement>();
+                }
+                le.preferredHeight = 50f;
+                le.preferredWidth = 0f;
+                le.flexibleWidth = 1f;
+                le.flexibleHeight = 0f;
+
+                // Fix TMP text on button
+                TextMeshProUGUI tmp = btns[i].GetComponentInChildren<TextMeshProUGUI>(true);
+                if (tmp != null)
+                {
+                    tmp.fontSize = 14f;
+                    tmp.enableWordWrapping = false;
+                    tmp.overflowMode = TextOverflowModes.Ellipsis;
+                }
+            }
+        }
+
+        // 3. Fix Content (inside ScrollView): remove CSF, it conflicts with GLG
+        //    CSF + GLG causes Content to be positioned 200+ px above viewport
+        Transform scrollView = FindDeepUnder(shopPanel.transform, "ItemScrollView");
+        if (scrollView != null)
+        {
+            Transform content = scrollView.Find("Viewport/Content");
+            if (content != null)
+            {
+                // Remove ContentSizeFitter - GLG handles layout, we handle size manually
+                ContentSizeFitter contentCSF = content.GetComponent<ContentSizeFitter>();
+                if (contentCSF != null)
+                    Object.DestroyImmediate(contentCSF);
+
+                // Fix GridLayoutGroup to use constrained layout
+                GridLayoutGroup glg = content.GetComponent<GridLayoutGroup>();
+                if (glg != null)
+                {
+                    glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+                    glg.constraintCount = 3;
+                    glg.spacing = new Vector2(10f, 10f);
+                    glg.padding = new RectOffset(5, 5, 5, 5);
+                    glg.cellSize = new Vector2(140f, 160f);
+                }
+
+                // Ensure Content is anchored at top-left and positioned correctly
+                RectTransform contentRT = content.GetComponent<RectTransform>();
+                contentRT.anchorMin = new Vector2(0, 1);
+                contentRT.anchorMax = new Vector2(1, 1);
+                contentRT.pivot = new Vector2(0.5f, 1f);
+                contentRT.anchoredPosition = Vector2.zero;
+            }
+
+            // Ensure ScrollRect has proper settings
+            ScrollRect scrollRect = scrollView.GetComponent<ScrollRect>();
+            if (scrollRect != null)
+            {
+                scrollRect.horizontal = false;
+                scrollRect.vertical = true;
+                scrollRect.movementType = ScrollRect.MovementType.Elastic;
+            }
+
+            // Ensure Viewport has mask
+            Transform viewport = scrollView.Find("Viewport");
+            if (viewport != null)
+            {
+                Mask mask = viewport.GetComponent<Mask>();
+                if (mask == null)
+                    mask = viewport.gameObject.AddComponent<Mask>();
+                mask.showMaskGraphic = true;
+
+                UnityEngine.UI.Image viewportImg = viewport.GetComponent<UnityEngine.UI.Image>();
+                if (viewportImg == null)
+                {
+                    viewportImg = viewport.gameObject.AddComponent<UnityEngine.UI.Image>();
+                    viewportImg.color = new Color(0.12f, 0.12f, 0.15f, 1f);
+                }
+            }
+        }
     }
 
     private void SetupExistingCategoryButtons()
@@ -273,6 +427,51 @@ public class ShopManager : MonoBehaviour
 
             spawnedSlots.Add(slotObj);
         }
+
+        // Fix Content size and position after populating
+        FixContentSize();
+    }
+
+    // Fix the Content RectTransform after items are spawned
+    private void FixContentSize()
+    {
+        if (itemGridParent == null) return;
+
+        RectTransform contentRT = itemGridParent.GetComponent<RectTransform>();
+        if (contentRT == null) return;
+
+        GridLayoutGroup glg = contentRT.GetComponent<GridLayoutGroup>();
+        if (glg == null) return;
+
+        int itemCount = 0;
+        for (int i = 0; i < contentRT.childCount; i++)
+        {
+            if (contentRT.GetChild(i).gameObject.activeSelf)
+                itemCount++;
+        }
+
+        if (itemCount == 0)
+        {
+            contentRT.sizeDelta = new Vector2(0, 0);
+            return;
+        }
+
+        // Calculate rows needed
+        int cols = glg.constraintCount;
+        int rows = Mathf.CeilToInt((float)itemCount / (float)cols);
+
+        float totalHeight = rows * glg.cellSize.y + (rows - 1) * glg.spacing.y + glg.padding.top + glg.padding.bottom;
+
+        // Set content height
+        contentRT.sizeDelta = new Vector2(0, totalHeight);
+
+        // Reset position to top
+        contentRT.anchoredPosition = Vector2.zero;
+
+        // Reset scroll
+        ScrollRect scrollRect = itemGridParent.GetComponentInParent<ScrollRect>();
+        if (scrollRect != null)
+            scrollRect.verticalNormalizedPosition = 1f;
     }
 
     // Pilih item untuk ditampilkan di detail

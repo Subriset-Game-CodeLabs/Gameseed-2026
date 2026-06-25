@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UsableItem
   itemName: Power Elixir
   description: Tingkatkan serangan 2x lipat selama 1 ronde.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: c358e2f03d3f8a94f9f1957e854b29ee, type: 3}
   price: 120
   category: 2
   itemType: 1

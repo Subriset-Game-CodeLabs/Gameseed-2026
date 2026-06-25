@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillItem
   itemName: Ice Shield
   description: Buat pelindung es di sekitar stick.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: af57356162cb4f945b0417b27d966471, type: 3}
   price: 450
   category: 1
   itemType: 0

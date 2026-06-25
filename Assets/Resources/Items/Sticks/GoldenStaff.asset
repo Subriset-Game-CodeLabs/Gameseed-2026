@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StickItem
   itemName: Golden Staff
   description: Tongkat emas legendaris. Kekuatan luar biasa.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: cfb82922de7f88f458f105c57bf5f798, type: 3}
   price: 2000
   category: 0
   itemType: 0
