@@ -14,9 +14,9 @@ namespace AlphaimeCorporationDemo
 
         private void Update()
         {
-            if (Input.GetKeyDown("q"))
+            if (UnityEngine.Input.GetKeyDown("q"))
                 Previous();
-            else if (Input.GetKeyDown("w"))
+            else if (UnityEngine.Input.GetKeyDown("w"))
                 Next();
         }
 

@@ -30,9 +30,9 @@ public class CoinFlipController : MonoBehaviour
     void Update()
     {
         // Deteksi klik mouse sebelah kiri
-        if (Input.GetMouseButtonDown(0) && !isFlipping && !hasConfirmed)
+        if (UnityEngine.Input.GetMouseButtonDown(0) && !isFlipping && !hasConfirmed)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Ray ray = Camera.main.ScreenPointToRay(UnityEngine.Input.mousePosition);
             RaycastHit hit;
 
             // Jika Raycast mengenai 3D Koin
