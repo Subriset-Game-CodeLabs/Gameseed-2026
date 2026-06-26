@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 
@@ -8,18 +9,33 @@ public class ShopManager : MonoBehaviour
     [Header("Item Database (auto-loaded from Resources if empty)")]
     [SerializeField] private List<BaseItem> allItems = new List<BaseItem>();
 
-    // Auto-wired references (found by name in hierarchy)
+    [Header("Battle Loadout")]
+    [SerializeField] private BattleInventory battleInventory;
+
+    [Header("Scene Settings")]
+    [SerializeField] private string battleSceneName = "Battle";
+    [SerializeField] private int battleSceneIndex = -1;
+
+    // Auto-wired references
     private Transform categoryButtonParent;
     private Transform itemGridParent;
     private GameObject itemSlotPrefab;
     private ShopItemDetail itemDetail;
     private TextMeshProUGUI moneyLabel;
-    private TextMeshProUGUI categoryTitle;
     private Button closeButton;
+    private Button startButton;
     private GameObject shopPanel;
+
+    // Equipment slots (bottom bar)
+    private EquipmentSlot stickSlot;
+    private EquipmentSlot[] skillSlots = new EquipmentSlot[3];
 
     private ItemCategory currentCategory;
     private List<GameObject> spawnedSlots = new List<GameObject>();
+
+    // Public accessors for EquipmentSlot
+    public BattleInventory BattleInventory => battleInventory;
+    public ItemCategory CurrentCategory => currentCategory;
 
     private void Awake()
     {
@@ -45,226 +61,88 @@ public class ShopManager : MonoBehaviour
             }
         }
 
-        // Setup close button
+        // Clear battle inventory on shop open
+        if (battleInventory != null)
+            battleInventory.Clear();
+
+        // Setup buttons
         if (closeButton != null)
         {
             closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(CloseShop);
         }
 
-        // Fix layout issues (CanvasScaler, VLG settings, etc.)
-        FixLayout();
+        if (startButton != null)
+        {
+            startButton.onClick.RemoveAllListeners();
+            startButton.onClick.AddListener(OnStartClicked);
+        }
 
-        // Wire up existing category buttons (already in scene)
-        SetupExistingCategoryButtons();
+        // Setup category buttons (order: Jajan, Stick, Skill)
+        SetupCategoryButtons();
 
-        // Clean any old cloned item slots
-        CleanOldClones();
+        // Setup equipment slots
+        SetupEquipmentSlots();
 
         // Open shop on first category
         gameObject.SetActive(true);
-        SelectCategory(ItemCategory.Stick);
+        SelectCategory(ItemCategory.UsableItem);
 
-        // Force layout rebuild after everything is set up
+        // Force layout rebuild
         Canvas.ForceUpdateCanvases();
-        LayoutRebuilder.ForceRebuildLayoutImmediate(shopPanel.GetComponent<RectTransform>());
-    }
-
-    private void FixLayout()
-    {
-        // 1. Fix CategoryPanel VLG: enable childControlHeight
         if (shopPanel != null)
-        {
-            Transform catPanelT = shopPanel.transform.Find("CategoryPanel");
-            if (catPanelT == null) catPanelT = FindDeepUnder(shopPanel.transform, "CategoryPanel");
-            if (catPanelT != null)
-            {
-                VerticalLayoutGroup vlg = catPanelT.GetComponent<VerticalLayoutGroup>();
-                if (vlg != null)
-                {
-                    vlg.childControlHeight = true;
-                    vlg.childControlWidth = true;
-                    vlg.childForceExpandHeight = false;
-                    vlg.childForceExpandWidth = true;
-                }
-            }
-        }
+            LayoutRebuilder.ForceRebuildLayoutImmediate(shopPanel.GetComponent<RectTransform>());
 
-        // 2. Fix CategoryButtonContainer: remove CSF, ensure VLG (vertical buttons, top-to-bottom)
-        if (categoryButtonParent != null)
-        {
-            // Remove ContentSizeFitter (causes conflicts with layout)
-            ContentSizeFitter csf = categoryButtonParent.GetComponent<ContentSizeFitter>();
-            if (csf != null)
-            {
-                Object.DestroyImmediate(csf);
-            }
-
-            // Remove HorizontalLayoutGroup if present (from old code)
-            HorizontalLayoutGroup oldHLG = categoryButtonParent.GetComponent<HorizontalLayoutGroup>();
-            if (oldHLG != null)
-            {
-                Object.DestroyImmediate(oldHLG);
-            }
-
-            // Add VerticalLayoutGroup if not present — buttons stack top-to-bottom
-            VerticalLayoutGroup containerVLG = categoryButtonParent.GetComponent<VerticalLayoutGroup>();
-            if (containerVLG == null)
-            {
-                containerVLG = categoryButtonParent.gameObject.AddComponent<VerticalLayoutGroup>();
-            }
-            containerVLG.childControlHeight = true;
-            containerVLG.childControlWidth = true;
-            containerVLG.childForceExpandHeight = false;
-            containerVLG.childForceExpandWidth = true;
-            containerVLG.spacing = 8f;
-            containerVLG.padding = new RectOffset(5, 5, 5, 5);
-            containerVLG.childAlignment = TextAnchor.UpperCenter;
-
-            // Fix CategoryButtonContainer size to fill CategoryPanel
-            RectTransform containerRT = categoryButtonParent.GetComponent<RectTransform>();
-            if (containerRT != null)
-            {
-                containerRT.anchorMin = new Vector2(0, 0);
-                containerRT.anchorMax = new Vector2(1, 1);
-                containerRT.pivot = new Vector2(0.5f, 0.5f);
-                containerRT.sizeDelta = Vector2.zero;
-                containerRT.anchoredPosition = Vector2.zero;
-            }
-
-            // Fix each button's LayoutElement for vertical stacking
-            ShopCategoryButton[] btns = categoryButtonParent.GetComponentsInChildren<ShopCategoryButton>(true);
-            for (int i = 0; i < btns.Length; i++)
-            {
-                LayoutElement le = btns[i].GetComponent<LayoutElement>();
-                if (le == null)
-                {
-                    le = btns[i].gameObject.AddComponent<LayoutElement>();
-                }
-                le.preferredHeight = 50f;
-                le.preferredWidth = 0f;
-                le.flexibleWidth = 1f;
-                le.flexibleHeight = 0f;
-
-                // Fix TMP text on button
-                TextMeshProUGUI tmp = btns[i].GetComponentInChildren<TextMeshProUGUI>(true);
-                if (tmp != null)
-                {
-                    tmp.fontSize = 14f;
-                    tmp.enableWordWrapping = false;
-                    tmp.overflowMode = TextOverflowModes.Ellipsis;
-                }
-            }
-        }
-
-        // 3. Fix Content (inside ScrollView): remove CSF, it conflicts with GLG
-        //    CSF + GLG causes Content to be positioned 200+ px above viewport
-        Transform scrollView = FindDeepUnder(shopPanel.transform, "ItemScrollView");
-        if (scrollView != null)
-        {
-            Transform content = scrollView.Find("Viewport/Content");
-            if (content != null)
-            {
-                // Remove ContentSizeFitter - GLG handles layout, we handle size manually
-                ContentSizeFitter contentCSF = content.GetComponent<ContentSizeFitter>();
-                if (contentCSF != null)
-                    Object.DestroyImmediate(contentCSF);
-
-                // Fix GridLayoutGroup to use constrained layout
-                GridLayoutGroup glg = content.GetComponent<GridLayoutGroup>();
-                if (glg != null)
-                {
-                    glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-                    glg.constraintCount = 3;
-                    glg.spacing = new Vector2(10f, 10f);
-                    glg.padding = new RectOffset(5, 5, 5, 5);
-                    glg.cellSize = new Vector2(140f, 160f);
-                }
-
-                // Ensure Content is anchored at top-left and positioned correctly
-                RectTransform contentRT = content.GetComponent<RectTransform>();
-                contentRT.anchorMin = new Vector2(0, 1);
-                contentRT.anchorMax = new Vector2(1, 1);
-                contentRT.pivot = new Vector2(0.5f, 1f);
-                contentRT.anchoredPosition = Vector2.zero;
-            }
-
-            // Ensure ScrollRect has proper settings
-            ScrollRect scrollRect = scrollView.GetComponent<ScrollRect>();
-            if (scrollRect != null)
-            {
-                scrollRect.horizontal = false;
-                scrollRect.vertical = true;
-                scrollRect.movementType = ScrollRect.MovementType.Elastic;
-            }
-
-            // Ensure Viewport has mask
-            Transform viewport = scrollView.Find("Viewport");
-            if (viewport != null)
-            {
-                Mask mask = viewport.GetComponent<Mask>();
-                if (mask == null)
-                    mask = viewport.gameObject.AddComponent<Mask>();
-                mask.showMaskGraphic = true;
-
-                UnityEngine.UI.Image viewportImg = viewport.GetComponent<UnityEngine.UI.Image>();
-                if (viewportImg == null)
-                {
-                    viewportImg = viewport.gameObject.AddComponent<UnityEngine.UI.Image>();
-                    viewportImg.color = new Color(0.12f, 0.12f, 0.15f, 1f);
-                }
-            }
-        }
+        RefreshMoney();
+        UpdateStartButton();
     }
 
-    private void SetupExistingCategoryButtons()
+    private void SetupCategoryButtons()
     {
         if (categoryButtonParent == null) return;
 
-        // Find all existing ShopCategoryButton components
         ShopCategoryButton[] buttons = categoryButtonParent.GetComponentsInChildren<ShopCategoryButton>(true);
 
-        if (buttons.Length == 0)
-        {
-            // If no buttons exist, create them from existing children with "CatBtn" prefix
-            Transform[] children = new Transform[categoryButtonParent.childCount];
-            for (int i = 0; i < children.Length; i++)
-                children[i] = categoryButtonParent.GetChild(i);
+        // Order: UsableItem (Jajan), Stick, Skill
+        ItemCategory[] categoryOrder = { ItemCategory.UsableItem, ItemCategory.Stick, ItemCategory.Skill };
 
-            ItemCategory[] categories = { ItemCategory.Stick, ItemCategory.Skill, ItemCategory.UsableItem };
-            for (int i = 0; i < children.Length && i < categories.Length; i++)
-            {
-                ShopCategoryButton catBtn = children[i].GetComponent<ShopCategoryButton>();
-                if (catBtn == null)
-                    catBtn = children[i].gameObject.AddComponent<ShopCategoryButton>();
-                catBtn.Setup(categories[i], this);
-            }
-        }
-        else
+        for (int i = 0; i < buttons.Length && i < categoryOrder.Length; i++)
         {
-            // Wire up existing buttons
-            foreach (ShopCategoryButton btn in buttons)
-            {
-                // Determine category from name
-                ItemCategory cat = ItemCategory.Stick;
-                if (btn.name.Contains("SKILL")) cat = ItemCategory.Skill;
-                else if (btn.name.Contains("USABLE")) cat = ItemCategory.UsableItem;
-                btn.Setup(cat, this);
-            }
+            buttons[i].Setup(categoryOrder[i], this);
         }
     }
 
-    private void CleanOldClones()
+    private void SetupEquipmentSlots()
     {
-        if (itemGridParent == null) return;
-        for (int i = itemGridParent.childCount - 1; i >= 0; i--)
+        // Find equipment slots by name
+        GameObject root = shopPanel != null ? shopPanel : gameObject;
+        Transform rootT = root.transform;
+
+        // Find StickSlot
+        Transform stickT = FindDeepUnder(rootT, "StickSlot");
+        if (stickT != null)
         {
-            Transform child = itemGridParent.GetChild(i);
-            if (child.name.Contains("(Clone)") || child.name == "ItemSlotPrefab")
+            stickSlot = stickT.GetComponent<EquipmentSlot>();
+            if (stickSlot == null)
+                stickSlot = stickT.gameObject.AddComponent<EquipmentSlot>();
+            stickSlot.Setup(this, EquipmentSlotType.Stick, 0);
+        }
+
+        // Find SkillSlots
+        for (int i = 0; i < 3; i++)
+        {
+            Transform skillT = FindDeepUnder(rootT, "SkillSlot_" + (i + 1));
+            if (skillT == null)
+                skillT = FindDeepUnder(rootT, "SkillSlot" + (i + 1));
+            if (skillT == null)
+                skillT = FindDeepUnder(rootT, "SkillSlot");
+
+            if (skillT != null)
             {
-                // Keep ItemSlotPrefab template, destroy clones
-                if (child.name.Contains("(Clone)"))
-                    Destroy(child.gameObject);
+                skillSlots[i] = skillT.GetComponent<EquipmentSlot>();
+                if (skillSlots[i] == null)
+                    skillSlots[i] = skillT.gameObject.AddComponent<EquipmentSlot>();
+                skillSlots[i].Setup(this, EquipmentSlotType.Skill, i);
             }
         }
     }
@@ -275,33 +153,41 @@ public class ShopManager : MonoBehaviour
             RefreshMoney();
     }
 
-    // Auto-find all UI references by searching the hierarchy by name
+    // ---- Auto-wire references ----
     private void AutoWireReferences()
     {
-        // ShopManager is at ShopCanvas/ShopManager (sibling of ShopPanel)
-        // Find ShopPanel via parent
         Transform shopPanelTransform = null;
-        if (transform.parent != null)
+
+        // First try: sibling at scene root (Manager and ShopPanel are siblings)
+        UnityEngine.SceneManagement.Scene scene = gameObject.scene;
+        UnityEngine.GameObject[] rootObjs = scene.GetRootGameObjects();
+        for (int i = 0; i < rootObjs.Length; i++)
+        {
+            if (rootObjs[i].name == "ShopPanel")
+            {
+                shopPanelTransform = rootObjs[i].transform;
+                break;
+            }
+        }
+
+        // Fallback: look in parent or deep search
+        if (shopPanelTransform == null && transform.parent != null)
             shopPanelTransform = transform.parent.Find("ShopPanel");
         if (shopPanelTransform == null)
             shopPanelTransform = FindDeep("ShopPanel");
 
         shopPanel = shopPanelTransform != null ? shopPanelTransform.gameObject : gameObject;
 
-        // Header - find under ShopPanel
-        Transform header = FindDeepUnder(shopPanelTransform, "Header");
+        // Header
+        Transform header = FindDeepUnder(shopPanelTransform, "TopBar");
         if (header != null)
         {
             moneyLabel = FindChildDeep<TextMeshProUGUI>(header, "MoneyText");
-            closeButton = FindChildDeep<Button>(header, "CloseButton");
+            closeButton = FindChildDeep<Button>(shopPanelTransform, "CloseButton");
+            startButton = FindChildDeep<Button>(shopPanelTransform, "StartButton");
         }
 
-        // GridTitle is under ItemGridPanel
-        Transform gridPanel = FindDeepUnder(shopPanelTransform, "ItemGridPanel");
-        if (gridPanel != null)
-            categoryTitle = FindChildDeep<TextMeshProUGUI>(gridPanel, "GridTitle");
-
-        // Category Panel
+        // Category buttons
         categoryButtonParent = FindDeepUnder(shopPanelTransform, "CategoryButtonContainer");
 
         // Item Grid - Content inside ScrollView
@@ -313,7 +199,7 @@ public class ShopManager : MonoBehaviour
                 itemGridParent = scrollView.Find("Viewport");
         }
 
-        // ItemSlotPrefab - find the deactivated template anywhere in scene
+        // ItemSlotPrefab
         itemSlotPrefab = FindInactive("ItemSlotPrefab");
 
         // Detail Panel
@@ -326,13 +212,12 @@ public class ShopManager : MonoBehaviour
         }
     }
 
-    // Find a child recursively by name (active only)
+    // ---- Hierarchy search helpers ----
     private Transform FindDeep(string name)
     {
         return transform.Find(name) ?? FindDeepIn(transform, name);
     }
 
-    // Find under a specific root
     private Transform FindDeepUnder(Transform root, string name)
     {
         if (root == null) return null;
@@ -352,7 +237,6 @@ public class ShopManager : MonoBehaviour
         return null;
     }
 
-    // Find a child component recursively by name
     private T FindChildDeep<T>(Transform parent, string name) where T : Component
     {
         Transform child = FindDeepIn(parent, name);
@@ -360,7 +244,6 @@ public class ShopManager : MonoBehaviour
         return null;
     }
 
-    // Find inactive GameObject by name
     private GameObject FindInactive(string name)
     {
         GameObject[] all = Resources.FindObjectsOfTypeAll<GameObject>();
@@ -372,44 +255,36 @@ public class ShopManager : MonoBehaviour
         return null;
     }
 
-    // Pilih kategori
+    // ---- Category Selection ----
     public void SelectCategory(ItemCategory category)
     {
         currentCategory = category;
 
-        // Update highlight tombol kategori
+        // Update tab highlight
         if (categoryButtonParent != null)
         {
             ShopCategoryButton[] buttons = categoryButtonParent.GetComponentsInChildren<ShopCategoryButton>(true);
             foreach (ShopCategoryButton btn in buttons)
-                btn.SetSelected(btn.name.Contains(category.ToString()));
+                btn.SetSelected(btn.Category == category);
         }
 
-        // Update judul
-        if (categoryTitle != null)
-            categoryTitle.text = GetCategoryDisplayName(category);
-
-        // Populate item grid
         PopulateItemGrid(category);
 
-        // Reset detail
         if (itemDetail != null)
             itemDetail.ShowNoSelection();
     }
 
-    // Populate grid item di panel tengah
+    // ---- Item Grid ----
     private void PopulateItemGrid(ItemCategory category)
     {
-        // Hapus slot lama
         ClearItemGrid();
 
         if (itemSlotPrefab == null || itemGridParent == null)
         {
-            Debug.LogWarning("[ShopManager] itemSlotPrefab atau itemGridParent null!");
+            Debug.LogWarning("[ShopManager] itemSlotPrefab or itemGridParent null!");
             return;
         }
 
-        // Filter item berdasarkan kategori
         List<BaseItem> categoryItems = GetItemsByCategory(category);
 
         foreach (BaseItem item in categoryItems)
@@ -419,20 +294,31 @@ public class ShopManager : MonoBehaviour
             ShopItemSlot slot = slotObj.GetComponent<ShopItemSlot>();
 
             bool isOwned = false;
+            int quantity = 0;
             if (InventoryManager.Instance != null && InventoryManager.Instance.Inventory != null)
+            {
                 isOwned = InventoryManager.Instance.Inventory.IsItemUnlocked(item);
+                quantity = InventoryManager.Instance.Inventory.GetItemCount(item);
+            }
+
+            bool isSelected = false;
+            if (battleInventory != null)
+            {
+                if (item is StickItem stickItem)
+                    isSelected = battleInventory.selectedStick == stickItem;
+                else if (item is SkillItem skillItem)
+                    isSelected = battleInventory.IsSkillSelected(skillItem);
+            }
 
             if (slot != null)
-                slot.Setup(item, this, isOwned);
+                slot.Setup(item, this, isOwned, quantity, isSelected);
 
             spawnedSlots.Add(slotObj);
         }
 
-        // Fix Content size and position after populating
         FixContentSize();
     }
 
-    // Fix the Content RectTransform after items are spawned
     private void FixContentSize()
     {
         if (itemGridParent == null) return;
@@ -456,28 +342,21 @@ public class ShopManager : MonoBehaviour
             return;
         }
 
-        // Calculate rows needed
         int cols = glg.constraintCount;
         int rows = Mathf.CeilToInt((float)itemCount / (float)cols);
-
         float totalHeight = rows * glg.cellSize.y + (rows - 1) * glg.spacing.y + glg.padding.top + glg.padding.bottom;
 
-        // Set content height
         contentRT.sizeDelta = new Vector2(0, totalHeight);
-
-        // Reset position to top
         contentRT.anchoredPosition = Vector2.zero;
 
-        // Reset scroll
         ScrollRect scrollRect = itemGridParent.GetComponentInParent<ScrollRect>();
         if (scrollRect != null)
             scrollRect.verticalNormalizedPosition = 1f;
     }
 
-    // Pilih item untuk ditampilkan di detail
+    // ---- Item Selection ----
     public void SelectItem(BaseItem item)
     {
-        // Update highlight pada slot
         foreach (GameObject slotObj in spawnedSlots)
         {
             ShopItemSlot slot = slotObj.GetComponent<ShopItemSlot>();
@@ -485,75 +364,193 @@ public class ShopManager : MonoBehaviour
                 slot.SetSelected(slot.Item == item);
         }
 
-        // Tampilkan detail
         if (itemDetail != null)
-            itemDetail.ShowItem(item);
+            itemDetail.ShowItem(item, this);
     }
 
-    // Refresh shop setelah beli
-    public void RefreshShop()
+    // ---- Equipment: Select Stick ----
+    public void SelectStick(StickItem stick)
     {
-        PopulateItemGrid(currentCategory);
-        RefreshMoney();
+        if (battleInventory == null) return;
+        battleInventory.selectedStick = stick;
+
+        RefreshEquipmentSlots();
+        RefreshShop();
     }
 
-    // Update tampilan uang
-    public void RefreshMoney()
+    // ---- Equipment: Add Skill ----
+    public bool AddSkill(SkillItem skill)
     {
-        if (moneyLabel == null) return;
-        if (InventoryManager.Instance != null && InventoryManager.Instance.Inventory != null)
-            moneyLabel.text = InventoryManager.Instance.Inventory.money + " G";
-    }
-
-    // Hapus semua slot di grid
-    private void ClearItemGrid()
-    {
-        foreach (GameObject slot in spawnedSlots)
+        if (battleInventory == null) return false;
+        int slotIndex = battleInventory.AddSkill(skill);
+        if (slotIndex >= 0)
         {
-            if (slot != null) Destroy(slot);
+            RefreshEquipmentSlots();
+            RefreshShop();
+            UpdateStartButton();
+            return true;
         }
-        spawnedSlots.Clear();
+        return false;
     }
 
-    // Ambil item berdasarkan kategori dari database
-    private List<BaseItem> GetItemsByCategory(ItemCategory category)
+    // ---- Equipment: Remove Skill at index ----
+    public void RemoveSkillAt(int index)
     {
-        List<BaseItem> result = new List<BaseItem>();
-        if (allItems == null) return result;
+        if (battleInventory == null) return;
+        battleInventory.RemoveSkillAt(index);
 
-        foreach (BaseItem item in allItems)
+        RefreshEquipmentSlots();
+        RefreshShop();
+        UpdateStartButton();
+    }
+
+    // ---- Refresh all equipment slot visuals ----
+    public void RefreshEquipmentSlots()
+    {
+        // Stick slot
+        if (stickSlot != null)
         {
-            if (item != null && item.category == category)
-                result.Add(item);
+            if (battleInventory != null && battleInventory.selectedStick != null)
+                stickSlot.ShowItem(battleInventory.selectedStick.icon, battleInventory.selectedStick.itemName);
+            else
+                stickSlot.ShowEmpty();
         }
 
-        return result;
-    }
-
-    // Nama kategori untuk display
-    private string GetCategoryDisplayName(ItemCategory category)
-    {
-        switch (category)
+        // Skill slots
+        for (int i = 0; i < skillSlots.Length; i++)
         {
-            case ItemCategory.Stick:      return "STICK";
-            case ItemCategory.Skill:      return "SKILL";
-            case ItemCategory.UsableItem: return "USABLE ITEM";
-            default:                      return "";
+            if (skillSlots[i] == null) continue;
+            if (battleInventory != null && battleInventory.selectedSkills[i] != null)
+            {
+                SkillItem skill = battleInventory.selectedSkills[i];
+                skillSlots[i].ShowItem(skill.icon, skill.itemName);
+            }
+            else
+            {
+                skillSlots[i].ShowEmpty();
+            }
         }
     }
 
-    // Buka / Tutup shop
-    public void OpenShop()
+    // ---- Buy / Select logic (called from ShopItemDetail) ----
+    public void BuyItem(BaseItem item)
     {
-        if (shopPanel != null)
-            shopPanel.SetActive(true);
-        SelectCategory(ItemCategory.Stick);
-        RefreshMoney();
+        if (InventoryManager.Instance == null) return;
+
+        if (InventoryManager.Instance.BuyItem(item))
+        {
+            RefreshShop();
+            RefreshMoney();
+
+            // Update detail if same item still selected
+            if (itemDetail != null)
+                itemDetail.RefreshButtons();
+        }
+    }
+
+    public void SelectStickItem(StickItem stick)
+    {
+        if (battleInventory == null) return;
+        battleInventory.selectedStick = stick;
+        RefreshEquipmentSlots();
+        RefreshShop();
+    }
+
+    public void SelectSkillItem(SkillItem skill)
+    {
+        if (battleInventory == null) return;
+        if (battleInventory.IsSkillSelected(skill))
+        {
+            // Deselect — find and remove
+            int idx = battleInventory.GetSkillIndex(skill);
+            if (idx >= 0)
+                battleInventory.RemoveSkillAt(idx);
+        }
+        else
+        {
+            battleInventory.AddSkill(skill);
+        }
+        RefreshEquipmentSlots();
+        RefreshShop();
+        UpdateStartButton();
+    }
+
+    // ---- Start / Back ----
+    private void OnStartClicked()
+    {
+        if (battleInventory == null || !battleInventory.AreAllSkillsSelected()) return;
+        if (battleInventory.selectedStick == null) return;
+
+        // Usable items are accessed directly from InventoryManager during battle
+        if (battleSceneIndex >= 0)
+            SceneManager.LoadScene(battleSceneIndex);
+        else if (!string.IsNullOrEmpty(battleSceneName))
+            SceneManager.LoadScene(battleSceneName);
     }
 
     public void CloseShop()
     {
         if (shopPanel != null)
             shopPanel.SetActive(false);
+    }
+
+    private void UpdateStartButton()
+    {
+        if (startButton == null) return;
+        bool ready = battleInventory != null && battleInventory.selectedStick != null && battleInventory.AreAllSkillsSelected();
+        startButton.interactable = ready;
+    }
+
+    // ---- Refresh ----
+    public void RefreshShop()
+    {
+        PopulateItemGrid(currentCategory);
+        RefreshMoney();
+    }
+
+    public void RefreshMoney()
+    {
+        if (moneyLabel == null) return;
+        if (InventoryManager.Instance != null && InventoryManager.Instance.Inventory != null)
+            moneyLabel.text = "RP" + InventoryManager.Instance.Inventory.money.ToString("N0");
+    }
+
+    public void OpenShop()
+    {
+        if (shopPanel != null)
+            shopPanel.SetActive(true);
+        SelectCategory(ItemCategory.UsableItem);
+        RefreshMoney();
+        RefreshEquipmentSlots();
+        UpdateStartButton();
+    }
+
+    // ---- Helpers ----
+    private void ClearItemGrid()
+    {
+        spawnedSlots.Clear();
+
+        // Destroy all children immediately
+        if (itemGridParent != null)
+        {
+            for (int i = itemGridParent.childCount - 1; i >= 0; i--)
+            {
+                Transform child = itemGridParent.GetChild(i);
+                if (child != null)
+                    DestroyImmediate(child.gameObject);
+            }
+        }
+    }
+
+    private List<BaseItem> GetItemsByCategory(ItemCategory category)
+    {
+        List<BaseItem> result = new List<BaseItem>();
+        if (allItems == null) return result;
+        foreach (BaseItem item in allItems)
+        {
+            if (item != null && item.category == category)
+                result.Add(item);
+        }
+        return result;
     }
 }

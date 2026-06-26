@@ -6,21 +6,26 @@ public class ShopCategoryButton : MonoBehaviour
 {
     private Button button;
     private TextMeshProUGUI label;
-    private GameObject selectedHighlight;
+    private Image backgroundImage;
 
     private ItemCategory category;
     private ShopManager shopManager;
+    private bool isSelected;
+
+    public ItemCategory Category => category;
+
+    // Colors
+    private static readonly Color normalBg = new Color(0.9f, 0.88f, 0.82f, 1f);  // light beige
+    private static readonly Color selectedBg = new Color(1f, 1f, 1f, 1f);          // white when selected
+    private static readonly Color normalText = new Color(0.4f, 0.38f, 0.35f, 1f); // dark text
+    private static readonly Color selectedText = new Color(0.1f, 0.1f, 0.1f, 1f); // darker text
 
     private void Awake()
     {
-        // Auto-wire
         button = GetComponent<Button>();
         if (button == null) button = GetComponentInChildren<Button>(true);
         label = GetComponentInChildren<TextMeshProUGUI>(true);
-
-        // Find highlight child
-        Transform hl = transform.Find("SelectedHighlight");
-        if (hl != null) selectedHighlight = hl.gameObject;
+        backgroundImage = GetComponent<Image>();
     }
 
     public void Setup(ItemCategory category, ShopManager shopManager)
@@ -37,43 +42,32 @@ public class ShopCategoryButton : MonoBehaviour
             button.onClick.AddListener(OnClick);
         }
 
-        // Ensure Image has a sprite so Unity renders the button geometry
-        Image img = GetComponent<Image>();
-        if (img != null)
+        // Ensure sprite
+        if (backgroundImage != null && backgroundImage.sprite == null)
         {
-            if (img.sprite == null)
-            {
-                Texture2D tex = new Texture2D(4, 4);
-                Color[] px = new Color[16];
-                for (int p = 0; p < 16; p++) px[p] = Color.white;
-                tex.SetPixels(px);
-                tex.Apply();
-                img.sprite = Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f), 100f);
-            }
-
-            // Set distinct visible colors per category
-            switch (category)
-            {
-                case ItemCategory.Stick:
-                    img.color = new Color(0.20f, 0.35f, 0.65f, 1f); // Blue
-                    break;
-                case ItemCategory.Skill:
-                    img.color = new Color(0.25f, 0.55f, 0.25f, 1f); // Green
-                    break;
-                case ItemCategory.UsableItem:
-                    img.color = new Color(0.70f, 0.40f, 0.15f, 1f); // Orange
-                    break;
-                default:
-                    img.color = new Color(0.25f, 0.25f, 0.30f, 1f); // Dark gray
-                    break;
-            }
+            Texture2D tex = new Texture2D(4, 4);
+            Color[] px = new Color[16];
+            for (int p = 0; p < 16; p++) px[p] = Color.white;
+            tex.SetPixels(px);
+            tex.Apply();
+            backgroundImage.sprite = Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f), 100f);
         }
+
+        ApplyVisual(false);
     }
 
     public void SetSelected(bool selected)
     {
-        if (selectedHighlight != null)
-            selectedHighlight.SetActive(selected);
+        this.isSelected = selected;
+        ApplyVisual(selected);
+    }
+
+    private void ApplyVisual(bool selected)
+    {
+        if (backgroundImage != null)
+            backgroundImage.color = selected ? selectedBg : normalBg;
+        if (label != null)
+            label.color = selected ? selectedText : normalText;
     }
 
     private void OnClick()
@@ -88,7 +82,7 @@ public class ShopCategoryButton : MonoBehaviour
         {
             case ItemCategory.Stick: return "STICK";
             case ItemCategory.Skill: return "SKILL";
-            case ItemCategory.UsableItem: return "USABLE";
+            case ItemCategory.UsableItem: return "JAJAN";
             default: return cat.ToString();
         }
     }

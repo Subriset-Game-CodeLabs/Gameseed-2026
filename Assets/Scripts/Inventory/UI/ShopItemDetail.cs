@@ -4,18 +4,17 @@ using TMPro;
 
 public class ShopItemDetail : MonoBehaviour
 {
-    // Auto-wired references
-    private Image iconImage;
     private TextMeshProUGUI nameLabel;
+    private TextMeshProUGUI statLabel;
     private TextMeshProUGUI descriptionLabel;
-    private TextMeshProUGUI priceLabel;
-    private TextMeshProUGUI typeLabel;
-    private Button buyButton;
-    private TextMeshProUGUI buyButtonLabel;
-    private Transform modelPreviewParent;
+    private TextMeshProUGUI qtyLabel;
+    private Button chooseButton;
+    private TextMeshProUGUI chooseButtonLabel;
     private GameObject noSelectionPanel;
+    private Transform modelPreviewParent;
 
     private BaseItem currentItem;
+    private ShopManager currentShop;
     private GameObject currentPreview;
 
     private void Awake()
@@ -25,41 +24,31 @@ public class ShopItemDetail : MonoBehaviour
 
     private void Start()
     {
-        if (buyButton != null)
+        if (chooseButton != null)
         {
-            buyButton.onClick.RemoveAllListeners();
-            buyButton.onClick.AddListener(OnBuyClicked);
+            chooseButton.onClick.RemoveAllListeners();
+            chooseButton.onClick.AddListener(OnChooseClicked);
         }
         ShowNoSelection();
     }
 
     private void AutoWireReferences()
     {
-        // Find children by actual hierarchy names
-        iconImage = FindChild<Image>("ItemIcon");
         nameLabel = FindChild<TextMeshProUGUI>("ItemName");
+        statLabel = FindChild<TextMeshProUGUI>("ItemStat");
         descriptionLabel = FindChild<TextMeshProUGUI>("ItemDescription");
-        priceLabel = FindChild<TextMeshProUGUI>("ItemPrice");
-        typeLabel = FindChild<TextMeshProUGUI>("ItemType");
-        buyButton = FindChild<Button>("BuyButton");
+        qtyLabel = FindChild<TextMeshProUGUI>("ItemQty");
+        chooseButton = FindChild<Button>("BuyButton");
         modelPreviewParent = FindChild<Transform>("ModelPreview");
-        
-        // NoSelectionText is a text, not a panel - use it as the no-selection indicator
         noSelectionPanel = FindChildGO("NoSelectionText");
-        
-        // If buyButton exists, find Text child for label
-        if (buyButton != null)
-        {
-            Transform textChild = buyButton.transform.Find("Text");
-            if (textChild != null)
-                buyButtonLabel = textChild.GetComponent<TextMeshProUGUI>();
-        }
 
-        // Fallback: find first TMP in children if specific names not found
-        if (nameLabel == null)
+        if (chooseButton != null)
         {
-            TextMeshProUGUI[] allTMP = GetComponentsInChildren<TextMeshProUGUI>(true);
-            if (allTMP.Length > 0) nameLabel = allTMP[0];
+            Transform textChild = chooseButton.transform.Find("Text");
+            if (textChild != null)
+                chooseButtonLabel = textChild.GetComponent<TextMeshProUGUI>();
+            if (chooseButtonLabel == null)
+                chooseButtonLabel = chooseButton.GetComponentInChildren<TextMeshProUGUI>(true);
         }
     }
 
@@ -76,9 +65,10 @@ public class ShopItemDetail : MonoBehaviour
         return t != null ? t.gameObject : null;
     }
 
-    public void ShowItem(BaseItem item)
+    public void ShowItem(BaseItem item, ShopManager shop)
     {
         currentItem = item;
+        currentShop = shop;
 
         if (noSelectionPanel != null)
             noSelectionPanel.SetActive(false);
@@ -86,45 +76,56 @@ public class ShopItemDetail : MonoBehaviour
         if (nameLabel != null)
             nameLabel.text = item.itemName;
 
+        // Stat display based on type
+        if (statLabel != null)
+        {
+            string stat = "";
+            StickItem stick = item as StickItem;
+            SkillItem skill = item as SkillItem;
+            UsableItem usable = item as UsableItem;
+            if (stick != null)
+                stat = "Damage: " + stick.damage + "\nThrow: " + stick.throwForce;
+            else if (skill != null)
+                stat = "Cooldown: " + skill.cooldown + "s\nMana: " + skill.manaCost;
+            else if (usable != null)
+                stat = "+" + usable.effectValue + " " + usable.effectType.ToString();
+            statLabel.text = stat;
+        }
+
         if (descriptionLabel != null)
             descriptionLabel.text = item.description;
 
-        if (priceLabel != null)
-            priceLabel.text = "Harga: " + item.price + " G";
-
-        if (typeLabel != null)
+        // Quantity for usable items
+        if (qtyLabel != null)
         {
-            string typeText = item.itemType == ItemType.Unlockable ? "Unlockable" : "Usable";
-            typeLabel.text = "Tipe: " + typeText;
-        }
-
-        if (iconImage != null)
-        {
-            if (item.icon != null)
+            if (item.category == ItemCategory.UsableItem)
             {
-                iconImage.sprite = item.icon;
-                iconImage.gameObject.SetActive(true);
+                qtyLabel.gameObject.SetActive(true);
+                int qty = 0;
+                if (InventoryManager.Instance != null && InventoryManager.Instance.Inventory != null)
+                    qty = InventoryManager.Instance.Inventory.GetItemCount(item);
+                qtyLabel.text = "Stock: " + qty;
             }
             else
             {
-                iconImage.gameObject.SetActive(false);
+                qtyLabel.gameObject.SetActive(false);
             }
         }
 
         Show3DPreview(item);
-        UpdateBuyButton();
+        UpdateChooseButton();
     }
 
     public void ShowNoSelection()
     {
         currentItem = null;
+        currentShop = null;
 
         if (nameLabel != null) nameLabel.text = "";
+        if (statLabel != null) statLabel.text = "";
         if (descriptionLabel != null) descriptionLabel.text = "";
-        if (priceLabel != null) priceLabel.text = "";
-        if (typeLabel != null) typeLabel.text = "";
-        if (iconImage != null) iconImage.gameObject.SetActive(false);
-        if (buyButton != null) buyButton.gameObject.SetActive(false);
+        if (qtyLabel != null) qtyLabel.gameObject.SetActive(false);
+        if (chooseButton != null) chooseButton.gameObject.SetActive(false);
         if (noSelectionPanel != null) noSelectionPanel.SetActive(true);
 
         Clear3DPreview();
@@ -141,10 +142,8 @@ public class ShopItemDetail : MonoBehaviour
             currentPreview = Instantiate(stickItem.stickPrefab, modelPreviewParent);
             currentPreview.transform.localPosition = Vector3.zero;
             currentPreview.transform.localRotation = Quaternion.identity;
-
             Rigidbody rb = currentPreview.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = true;
-
             Collider col = currentPreview.GetComponent<Collider>();
             if (col != null) col.enabled = false;
         }
@@ -159,47 +158,115 @@ public class ShopItemDetail : MonoBehaviour
         }
     }
 
-    private void UpdateBuyButton()
+    public void RefreshButtons()
     {
-        if (buyButton == null || currentItem == null) return;
+        UpdateChooseButton();
+    }
 
-        buyButton.gameObject.SetActive(true);
+    private void UpdateChooseButton()
+    {
+        if (chooseButton == null || currentItem == null) return;
+        chooseButton.gameObject.SetActive(true);
 
         InventoryManager manager = InventoryManager.Instance;
-        if (manager == null) return;
+        if (manager == null) { chooseButtonLabel.text = "BUY"; chooseButton.interactable = false; return; }
 
-        bool canBuy = manager.CanBuyItem(currentItem);
+        BattleInventory battleInv = currentShop != null ? currentShop.BattleInventory : null;
+        bool isOwned = manager.Inventory != null ? manager.Inventory.IsItemUnlocked(currentItem) : false;
+        bool canBuy = manager.Inventory != null ? manager.CanBuyItem(currentItem) : false;
 
-        if (currentItem.itemType == ItemType.Unlockable && manager.Inventory.IsItemUnlocked(currentItem))
+        // UsableItem: always BUY
+        if (currentItem.category == ItemCategory.UsableItem)
         {
-            if (buyButtonLabel != null) buyButtonLabel.text = "SUDAH DIMILIKI";
-            buyButton.interactable = false;
+            if (chooseButtonLabel != null)
+                chooseButtonLabel.text = "BUY (" + currentItem.price + " G)";
+            chooseButton.interactable = canBuy;
+            return;
         }
-        else if (!canBuy)
+
+        // Stick
+        if (currentItem is StickItem stickItem)
         {
-            if (buyButtonLabel != null) buyButtonLabel.text = "UANG TIDAK CUKUP";
-            buyButton.interactable = false;
+            if (!isOwned)
+            {
+                if (chooseButtonLabel != null)
+                    chooseButtonLabel.text = "BUY (" + currentItem.price + " G)";
+                chooseButton.interactable = canBuy;
+            }
+            else if (battleInv != null && battleInv.selectedStick == stickItem)
+            {
+                if (chooseButtonLabel != null)
+                    chooseButtonLabel.text = "SELECTED";
+                chooseButton.interactable = false;
+            }
+            else
+            {
+                if (chooseButtonLabel != null)
+                    chooseButtonLabel.text = "SELECT";
+                chooseButton.interactable = true;
+            }
+            return;
         }
-        else
+
+        // Skill
+        if (currentItem is SkillItem skillItem)
         {
-            if (buyButtonLabel != null) buyButtonLabel.text = "BELI (" + currentItem.price + " G)";
-            buyButton.interactable = true;
+            if (!isOwned)
+            {
+                if (chooseButtonLabel != null)
+                    chooseButtonLabel.text = "BUY (" + currentItem.price + " G)";
+                chooseButton.interactable = canBuy;
+            }
+            else if (battleInv != null && battleInv.IsSkillSelected(skillItem))
+            {
+                if (chooseButtonLabel != null)
+                    chooseButtonLabel.text = "SELECTED";
+                chooseButton.interactable = false;
+            }
+            else
+            {
+                if (chooseButtonLabel != null)
+                    chooseButtonLabel.text = "SELECT";
+                chooseButton.interactable = true;
+            }
         }
     }
 
-    private void OnBuyClicked()
+    private void OnChooseClicked()
     {
-        if (currentItem == null) return;
+        if (currentItem == null || currentShop == null) return;
 
         InventoryManager manager = InventoryManager.Instance;
         if (manager == null) return;
 
-        if (manager.BuyItem(currentItem))
+        bool isOwned = manager.Inventory != null ? manager.Inventory.IsItemUnlocked(currentItem) : false;
+
+        // UsableItem: always buy
+        if (currentItem.category == ItemCategory.UsableItem)
         {
-            UpdateBuyButton();
-            ShopManager shop = FindFirstObjectByType<ShopManager>();
-            if (shop != null) shop.RefreshShop();
+            currentShop.BuyItem(currentItem);
+            return;
         }
+
+        // Stick or Skill
+        if (!isOwned)
+        {
+            // Buy first
+            currentShop.BuyItem(currentItem);
+            return;
+        }
+
+        // Already owned: select/deselect
+        if (currentItem is StickItem stickItem)
+        {
+            currentShop.SelectStickItem(stickItem);
+        }
+        else if (currentItem is SkillItem skillItem)
+        {
+            currentShop.SelectSkillItem(skillItem);
+        }
+
+        UpdateChooseButton();
     }
 
     private void OnDestroy()

@@ -11,6 +11,18 @@ public class InventoryManager : PersistentSingleton<InventoryManager>
     // Event
     public event Action OnInventoryChanged;
 
+    private void Awake()
+    {
+        if (playerInventory == null)
+        {
+            playerInventory = Resources.Load("PlayerInventory") as PlayerInventory;
+            if (playerInventory != null)
+                Debug.Log("[InventoryManager] Auto-loaded PlayerInventory from Resources.");
+            else
+                Debug.LogWarning("[InventoryManager] PlayerInventory not found in Resources!");
+        }
+    }
+
     // Beli item
     public bool BuyItem(BaseItem item)
     {

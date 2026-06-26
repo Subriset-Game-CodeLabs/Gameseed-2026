@@ -7,32 +7,34 @@ public class ShopItemSlot : MonoBehaviour
     private Button button;
     private Image iconImage;
     private TextMeshProUGUI nameLabel;
-    private TextMeshProUGUI priceLabel;
-    private GameObject lockedOverlay;
-    private GameObject selectedHighlight;
+    private TextMeshProUGUI qtyLabel;
+    private Image borderImage;
 
     private BaseItem item;
     private ShopManager shopManager;
+    private int quantity;
+    private bool isSelected;
 
     public BaseItem Item => item;
 
+    // Default slot colors
+    private static readonly Color normalColor = new Color(0.85f, 0.82f, 0.75f, 1f);  // beige
+    private static readonly Color selectedColor = new Color(0.3f, 0.7f, 0.3f, 1f);    // green border
+    private static readonly Color lockedColor = new Color(0.6f, 0.58f, 0.55f, 1f);    // darker beige (locked)
+
     private void Awake()
     {
-        // Auto-wire by finding children by name
         button = GetComponent<Button>();
         if (button == null) button = GetComponentInChildren<Button>(true);
 
         iconImage = FindChild<Image>("SlotIcon");
         nameLabel = FindChild<TextMeshProUGUI>("SlotName");
-        priceLabel = FindChild<TextMeshProUGUI>("SlotPrice");
-        lockedOverlay = FindChildGO("LockedOverlay");
-        selectedHighlight = FindChildGO("SelectedHighlight");
+        qtyLabel = FindChild<TextMeshProUGUI>("SlotQty");
+        borderImage = GetComponent<Image>();
 
-        // If no name/price found, try to find any TMP in children
         if (nameLabel == null) nameLabel = GetComponentInChildren<TextMeshProUGUI>(true);
         if (button == null) button = gameObject.AddComponent<Button>();
 
-        // Auto-add Image target to button if none set
         if (button != null && button.targetGraphic == null)
         {
             Image bg = GetComponent<Image>();
@@ -47,40 +49,53 @@ public class ShopItemSlot : MonoBehaviour
         return null;
     }
 
-    private GameObject FindChildGO(string childName)
-    {
-        Transform t = transform.Find(childName);
-        return t != null ? t.gameObject : null;
-    }
-
-    public void Setup(BaseItem item, ShopManager shopManager, bool isOwned)
+    public void Setup(BaseItem item, ShopManager shopManager, bool isOwned, int quantity, bool isSelected)
     {
         this.item = item;
         this.shopManager = shopManager;
+        this.quantity = quantity;
+        this.isSelected = isSelected;
 
-        // Set tampilan
-        if (iconImage != null && item.icon != null)
+        // Icon
+        if (iconImage != null)
         {
-            iconImage.sprite = item.icon;
-            iconImage.gameObject.SetActive(true);
+            // Defensive: ensure icon is always fully visible and not stretched
+            iconImage.color = Color.white;
+            iconImage.preserveAspect = true;
+
+            if (item.icon != null)
+            {
+                iconImage.sprite = item.icon;
+                iconImage.gameObject.SetActive(true);
+            }
+            else
+            {
+                iconImage.gameObject.SetActive(false);
+            }
         }
 
+        // Name
         if (nameLabel != null)
             nameLabel.text = item.itemName;
 
-        if (priceLabel != null)
+        // Quantity (only for UsableItem)
+        if (qtyLabel != null)
         {
-            if (item.itemType == ItemType.Unlockable && isOwned)
-                priceLabel.text = "OWNED";
+            if (item.category == ItemCategory.UsableItem)
+            {
+                qtyLabel.gameObject.SetActive(true);
+                qtyLabel.text = "Qty: " + quantity;
+            }
             else
-                priceLabel.text = item.price + " G";
+            {
+                qtyLabel.gameObject.SetActive(false);
+            }
         }
 
-        // Tampilkan overlay jika belum dimiliki (unlockable)
-        if (lockedOverlay != null)
-            lockedOverlay.SetActive(item.itemType == ItemType.Unlockable && !isOwned);
+        // Border color
+        UpdateBorderColor(isOwned, isSelected);
 
-        // Event
+        // Button
         if (button != null)
         {
             button.onClick.RemoveAllListeners();
@@ -88,10 +103,23 @@ public class ShopItemSlot : MonoBehaviour
         }
     }
 
+    private void UpdateBorderColor(bool isOwned, bool isSelected)
+    {
+        if (borderImage == null) return;
+
+        if (isSelected)
+            borderImage.color = selectedColor;
+        else if (!isOwned && item.itemType == ItemType.Unlockable)
+            borderImage.color = lockedColor;
+        else
+            borderImage.color = normalColor;
+    }
+
     public void SetSelected(bool selected)
     {
-        if (selectedHighlight != null)
-            selectedHighlight.SetActive(selected);
+        this.isSelected = selected;
+        if (borderImage != null)
+            borderImage.color = selected ? selectedColor : normalColor;
     }
 
     private void OnClick()
