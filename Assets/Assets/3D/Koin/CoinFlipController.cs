@@ -126,7 +126,7 @@ public class CoinFlipController : MonoBehaviour
 
         yield return new WaitForSeconds(tossAnimationDuration);
 
-        // 3. Tentukan siapa yang main duluan
+        // Penentuan siapa yang main duluan
         bool playerGoesFirst = (isPlayerChoosingGambar == coinLandedGambar);
 
         // Simpan data, dibaca di scene gameplay menggunakan PlayerPrefs

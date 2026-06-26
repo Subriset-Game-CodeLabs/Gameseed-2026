@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
 namespace AlphaimeCorporationDemo
 {
     public class DemoScript : MonoBehaviour
@@ -10,7 +11,6 @@ namespace AlphaimeCorporationDemo
         {
             transform.GetChild(ind).gameObject.SetActive(true);
         }
-
 
         private void Update()
         {
