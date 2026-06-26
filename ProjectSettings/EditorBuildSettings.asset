@@ -9,7 +9,16 @@ EditorBuildSettings:
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
   - enabled: 1
-    path: Assets/Scenes/MisalnyaStage.unity
-    guid: b81f6a5f93afa554ca1fe6c129240614
+    path: Assets/Scenes/MainMenu.unity
+    guid: ed12df4d2f219fd428529e68d4f2b76c
+  - enabled: 1
+    path: Assets/Scenes/CoinFlipScene.unity
+    guid: e83ac0d0ba54ffa49b41587833d56e9e
+  - enabled: 1
+    path: Assets/Scenes/AllAssetsOverview.unity
+    guid: 6786b17574bfc7844b495476406299e5
+  - enabled: 1
+    path: Assets/Scenes/PrologScene.unity
+    guid: d267851ebf8ba7d4983b375469af4ccc
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
