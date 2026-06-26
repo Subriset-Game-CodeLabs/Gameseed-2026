@@ -14,7 +14,6 @@ namespace AlphaimeCorporationDemo
 
         private void Update()
         {
-            // Menggunakan UnityEngine.Input untuk menghindari konflik nama
             if (UnityEngine.Input.GetKeyDown("q"))
                 Previous();
             else if (UnityEngine.Input.GetKeyDown("w"))
