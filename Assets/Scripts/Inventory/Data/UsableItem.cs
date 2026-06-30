@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum UsableEffectType
@@ -16,6 +17,7 @@ public class UsableItem : BaseItem
     public UsableEffectType effectType;
     public int effectValue = 10;
     public int maxStack = 99;
+    public List<EffectSO> effects;
 
     private void OnValidate()
     {

@@ -5,24 +5,50 @@ using UnityEngine;
 
 public class PlayerTurnState : IState
 {
-    private GameManager _gameManager;
+    private BattleManager _battleManager;
+    private BattleUIManager _battleUIManager;
+    private SkillComponent _skillComponent;
     private readonly FiniteStateMachine _subState = new FiniteStateMachine();
 
-    public AimState AimState {get; private set;}
-    public PowerState PowerState {get; private set;}
+    public AimState AimState { get; private set; }
+    public PowerState PowerState { get; private set; }
 
-    public PlayerTurnState(GameManager gameManager, AimController aimController, Shockwave shockwave, Stick playerStick)
+    public PlayerTurnState(BattleManager battleManager, BattleUIManager battleUIManager, AimController aimController, Shockwave shockwave, Stick playerStick, SkillComponent skillComponent)
     {
-        _gameManager = gameManager;
+        _battleManager = battleManager;
+        _battleUIManager = battleUIManager;
+        _skillComponent = skillComponent;
         AimState = new AimState(this, aimController);
-        PowerState = new PowerState(this, shockwave, playerStick);
+        PowerState = new PowerState(this, _battleUIManager, shockwave, playerStick);
     }
 
 
     public void OnEnter()
     {
-        Debug.Log("Player's Turn");
+        _battleUIManager.PlayFadeSequence("player's turn", () =>
+        {
+            
+        });
+        _battleUIManager.OnSkillPressed += OnSkillPressed;
+        _battleUIManager.OnItemPressed += OnItemPressed;
+        InputManager.Instance.PlayerInput.Smash.OnDown += OnSmash;
+    }
+
+    private void OnItemPressed(BaseItem item)
+    {
+        _battleManager.PlayerCharacter.UseItem(item, _battleManager.PlayerCharacter, _battleManager.EnemyCharacter);
+
+    }
+
+    private void OnSkillPressed(SkillInstance skill)
+    {
+        _battleManager.PlayerCharacter.UseSkill(skill, _battleManager.PlayerCharacter, _battleManager.EnemyCharacter);
+    }
+
+    private void OnSmash()
+    {
         _subState.ChangeState(AimState);
+        InputManager.Instance.PlayerInput.Smash.OnDown -= OnSmash;
     }
 
     public void OnUpdate()
@@ -33,16 +59,15 @@ public class PlayerTurnState : IState
     public void OnExit()
     {
         Debug.Log("Exiting Player's Turn");
+        _battleUIManager.OnSkillPressed -= OnSkillPressed;
+        _battleUIManager.OnItemPressed -= OnItemPressed;
     }
 
     public void GoTo(IState next) => _subState.ChangeState(next);
- 
-    // ResolveState calls this once the roll's result is fully handled
-    public void EndTurn() => _gameManager.GameStateMachine.ChangeState(_gameManager.EnemyTurnState);
-    
-    public void ResolveDamage(HealthComponent targetHealth, int damageAmount) 
+
+    public void EndTurn(HealthComponent targetHealth = null, int damageAmount = 0)
     {
-        _gameManager.ResolveTurnState.SetDamageInfo(targetHealth, damageAmount, false);
-        _gameManager.GameStateMachine.ChangeState(_gameManager.ResolveTurnState);
+        _battleManager.ResolveTurnState.SetDamageInfo(false, targetHealth, damageAmount);
+        _battleManager.BattleStateMachine.ChangeState(_battleManager.ResolveTurnState);
     }
 }

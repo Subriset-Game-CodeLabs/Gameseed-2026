@@ -16,8 +16,6 @@ public class Stick : MonoBehaviour
 
     [SerializeField] private float velocityThreshold = 0.1f;
     [SerializeField] private float normalThreshold = 0.3f;
-    [SerializeField] private string ownerTag = "Player"; // "Player" or "Enemy"
-
     private void Start()
     {
         rb = GetComponent<Rigidbody>();

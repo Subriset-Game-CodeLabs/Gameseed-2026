@@ -14,34 +14,22 @@ public class HealthUI : MonoBehaviour
         UpdateHealthUI();
     }
 
-    /// <summary>
-    /// Set the current HP and update the UI accordingly
-    /// </summary>
     public void SetHP(int hp)
     {
         currentHP = Mathf.Clamp(hp, 0, maxHP);
         UpdateHealthUI();
     }
 
-    /// <summary>
-    /// Take damage and reduce HP
-    /// </summary>
     public void TakeDamage(int damage)
     {
         SetHP(currentHP - damage);
     }
 
-    /// <summary>
-    /// Heal and increase HP
-    /// </summary>
     public void Heal(int amount)
     {
         SetHP(currentHP + amount);
     }
 
-    /// <summary>
-    /// Update the health UI by deactivating indicators when HP is lost
-    /// </summary>
     private void UpdateHealthUI()
     {
         for (int i = 0; i < healthIndicators.Count; i++)
@@ -51,27 +39,4 @@ public class HealthUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Get the current HP
-    /// </summary>
-    public int GetCurrentHP()
-    {
-        return currentHP;
-    }
-
-    /// <summary>
-    /// Get the max HP
-    /// </summary>
-    public int GetMaxHP()
-    {
-        return maxHP;
-    }
-
-    /// <summary>
-    /// Check if the player is dead
-    /// </summary>
-    public bool IsDead()
-    {
-        return currentHP <= 0;
-    }
 }

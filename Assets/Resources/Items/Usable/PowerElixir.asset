@@ -18,6 +18,8 @@ MonoBehaviour:
   price: 120
   category: 2
   itemType: 1
-  effectType: 1
+  effectType: 0
   effectValue: 2
   maxStack: 10
+  effects:
+  - {fileID: 11400000, guid: cfdc0481aa89bb244b5f30b81d666375, type: 2}

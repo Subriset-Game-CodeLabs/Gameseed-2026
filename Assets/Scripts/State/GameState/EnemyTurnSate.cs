@@ -1,29 +1,33 @@
-using System;
 using UnityEngine;
 
 public class EnemyTurnState : IState
 {
-    private GameManager _gameManager;
+    private BattleManager _battleManager;
+    private BattleUIManager _battleUIManager;
     private AimController _enemyAimController;
     private Shockwave _enemyShockwave;
     private Stick _enemyStick;
 
-    public EnemyTurnState(GameManager gameManager, AimController aimController, Shockwave shockwave, Stick stick)
+    public EnemyTurnState(BattleManager battleManager, BattleUIManager battleUIManager, AimController aimController, Shockwave shockwave, Stick stick)
     {
-        _gameManager = gameManager;
+        _battleManager = battleManager;
         _enemyAimController = aimController;
         _enemyShockwave = shockwave;
         _enemyStick = stick;
+        _battleUIManager = battleUIManager;
     }
 
     public void OnEnter()
     {
-        _enemyAimController.OnAimPositionUpdated += OnAimPositionUpdated;
-        _enemyStick.OnLanded += OnLanded;
-        _enemyStick.OnLandedOnPlayer += OnLandedOnPlayer;
-        _enemyAimController.SetUseMouseInput(false);
-        _enemyAimController.SetAimDirection(_enemyAimController.GetEdgePoints(3)[1]);
-        _enemyAimController.StartAiming();
+        _battleUIManager.PlayFadeSequence("enemy's turn", () =>
+        {
+            _enemyAimController.OnAimPositionUpdated += OnAimPositionUpdated;
+            _enemyStick.OnLanded += OnLanded;
+            _enemyStick.OnLandedOnPlayer += OnLandedOnPlayer;
+            _enemyAimController.SetAimDirection(_enemyAimController.GetEdgePoints(3)[1]);
+            _enemyAimController.StartAiming();
+        });
+
     }
 
     private void OnLandedOnPlayer(GameObject playerObject)
@@ -31,23 +35,21 @@ public class EnemyTurnState : IState
         HealthComponent healthComponent = playerObject.GetComponent<HealthComponent>();
         if (healthComponent != null)
         {
-            // Transition to ResolveTurnState with damage info
-            _gameManager.ResolveTurnState.SetDamageInfo(healthComponent, 1, true);
-            _gameManager.GameStateMachine.ChangeState(_gameManager.ResolveTurnState);
+            EndTurn(healthComponent, 1);
         }
     }
 
     private void OnAimPositionUpdated()
     {
         Debug.Log("Enemy Stop Aiming");
-        _enemyShockwave.Explode(1, "Enemy");
+        _enemyShockwave.Explode(Random.Range(0.2f, 1f), "Enemy");
         Debug.Log("Enemy Smack");
         _enemyStick.StartFlying();
     }
 
     private void OnLanded(GameObject @object)
     {
-        _gameManager.GameStateMachine.ChangeState(_gameManager.PlayerTurnState);
+        EndTurn();
     }
 
     public void OnUpdate()
@@ -61,5 +63,11 @@ public class EnemyTurnState : IState
         _enemyAimController.OnAimPositionUpdated -= OnAimPositionUpdated;
         _enemyStick.OnLanded -= OnLanded;
         _enemyStick.OnLandedOnPlayer -= OnLandedOnPlayer;
+    }
+
+    public void EndTurn(HealthComponent targetHealth = null, int damageAmount = 0)
+    {
+        _battleManager.ResolveTurnState.SetDamageInfo(true, targetHealth, damageAmount);
+        _battleManager.BattleStateMachine.ChangeState(_battleManager.ResolveTurnState);
     }
 }

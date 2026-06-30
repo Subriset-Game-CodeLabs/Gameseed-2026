@@ -67,6 +67,7 @@ public class InventoryManager : PersistentSingleton<InventoryManager>
         if (playerInventory.GetItemCount(item) <= 0)
             return false;
 
+        Debug.Log("Item used");
         playerInventory.RemoveItem(item);
         OnInventoryChanged?.Invoke();
         return true;

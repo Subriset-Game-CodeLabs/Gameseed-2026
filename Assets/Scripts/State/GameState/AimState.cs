@@ -15,7 +15,7 @@ public class AimState : IState
     public void OnEnter()
     {
         Debug.Log("Entering Aiming State");
-        _aimController.SetUseMouseInput(true);
+        Debug.Log(_aimController);
         _aimController.StartAiming();
         _aimController.OnStopAiming += OnStopAiming;
     }

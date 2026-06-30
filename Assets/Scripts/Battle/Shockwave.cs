@@ -6,21 +6,45 @@ public class Shockwave : MonoBehaviour
 {
 
     [SerializeField] private float _shockwaveRadius = 5f;
-    [SerializeField] private float _maxPower = 5f;
     [SerializeField] private float _coneAngle = 45f;
     [SerializeField] private Transform _targetIndicator;
 
+    private Character _character;
     public event Action OnSmash;
+
+    void Start()
+    {
+        
+    }
+
+    public void SetTargetIndicator(Transform transform)
+    {
+        _targetIndicator = transform;
+        _character = _targetIndicator.GetComponent<Character>();
+    }
 
     void Update()
     {
+
         transform.rotation = Quaternion.LookRotation(_targetIndicator.position - transform.position);
+    }
+
+    
+
+    public void ShowHand()
+    {
+        gameObject.SetActive(true);
+    }
+
+    public void HideHand()
+    {
+        gameObject.SetActive(false);
     }
 
     public void Explode(float powerModifier, string targetTag)
     {
+        float currentPower = _character.CharacterPower;
         OnSmash?.Invoke();
-        Debug.Log(transform.position);
         Vector3 explosionPosition = transform.position;
         Vector3 coneDirection = transform.forward;
 
@@ -33,19 +57,17 @@ public class Shockwave : MonoBehaviour
             {
                 if (rb.transform.tag != targetTag)
                     continue;
-                
+
                 Vector3 directionToTarget = (hit.transform.position - explosionPosition).normalized;
                 float angle = Vector3.Angle(coneDirection, directionToTarget);
 
                 rb.linearVelocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
-                Debug.Log(angle);
-                Debug.Log(_coneAngle);
                 
                 // if (angle <= _coneAngle)
                 // {
-                Debug.Log(powerModifier * _maxPower);
-                rb.AddExplosionForce(powerModifier * _maxPower, explosionPosition, _shockwaveRadius, 2.0f, ForceMode.Impulse);
+                Debug.Log(powerModifier * currentPower);
+                rb.AddExplosionForce(powerModifier * currentPower, explosionPosition, _shockwaveRadius, 2.0f, ForceMode.Impulse);
                 // }
             }
         }

@@ -43,20 +43,23 @@ namespace Input
     public class PlayerActionMap : ActionMap
     {
         private InputValue<Vector2> _movement;
-        private InputButton _jump;
+        private InputButton _smash;
         private InputButton _attack;
+        private InputButton _interact;
 
         public InputValue<Vector2> Movement => _movement;
-        public InputButton Jump => _jump;
+        public InputButton Smash => _smash;
         public InputButton Attack => _attack;
+        public InputButton Interact => _interact;
 
         public override bool HasPollable => true;
 
         public PlayerActionMap(InputActions action) : base(action)
         {
             _movement = new InputValue<Vector2>(action.Player.Move);
-            _jump = new InputButton(action.Player.Jump);
+            _smash = new InputButton(action.Player.Smash);
             _attack = new InputButton(action.Player.Attack);
+            _interact = new InputButton(action.Player.Interact);
         }
 
         public override void OnEnter() => InputActions.Player.Enable();

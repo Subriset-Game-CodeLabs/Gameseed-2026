@@ -4,9 +4,12 @@ using UnityEngine;
 public class SkillItem : BaseItem
 {
     [Header("Skill Data")]
-    public float cooldown = 5f;
+    public int cooldown = 5;
     public int manaCost = 10;
     public GameObject skillEffectPrefab;
+
+    public SkillTarget targetType;
+    public EffectSO[] effects; 
 
     private void OnValidate()
     {

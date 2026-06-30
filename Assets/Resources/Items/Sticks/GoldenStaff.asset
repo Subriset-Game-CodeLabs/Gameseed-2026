@@ -18,6 +18,6 @@ MonoBehaviour:
   price: 2000
   category: 0
   itemType: 0
-  stickPrefab: {fileID: 0}
+  stickPrefab: {fileID: 3441943890983485002, guid: 2e78357adba84de4f860688b75d8be8f, type: 3}
   damage: 5
   throwForce: 15

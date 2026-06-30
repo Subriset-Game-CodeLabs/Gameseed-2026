@@ -1,4 +1,5 @@
 using System;
+using Input;
 using UnityEngine;
 
 public class PowerState : IState
@@ -6,12 +7,14 @@ public class PowerState : IState
     private readonly PlayerTurnState _turn;
     private Shockwave _shockwave;
     private Stick _playerStick;
+    private BattleUIManager _battleUIManager;
 
-    public PowerState(PlayerTurnState turn, Shockwave shockwave, Stick playerStick)
+    public PowerState(PlayerTurnState turn, BattleUIManager battleUIManager, Shockwave shockwave, Stick playerStick)
     {
         _turn = turn;
         _shockwave = shockwave;
         _playerStick = playerStick;
+        _battleUIManager = battleUIManager;
     }
 
     public void OnEnter()
@@ -19,13 +22,13 @@ public class PowerState : IState
         Debug.Log("Entering Power State");
         _playerStick.OnLanded += OnLanded;
         _playerStick.OnLandedOnEnemy += OnLandedOnEnemy;
-        UIManager.Instance.ShowPowerUI();
-        UIManager.Instance.OnSmackPressed += OnSmackPressed;
+        _battleUIManager.ShowPowerUI();
+        _battleUIManager.OnSmackPressed += OnSmackPressed;
     }
 
     private void OnSmackPressed(float powerModifier)
     {
-        UIManager.Instance.HidePowerUI();
+        _battleUIManager.HidePowerUI();
         _shockwave.Explode(powerModifier, "Player");
         _playerStick.StartFlying();
     }
@@ -39,7 +42,7 @@ public class PowerState : IState
     {
         _playerStick.OnLanded -= OnLanded;
         _playerStick.OnLandedOnEnemy -= OnLandedOnEnemy;
-        UIManager.Instance.OnSmackPressed -= OnSmackPressed;
+        _battleUIManager.OnSmackPressed -= OnSmackPressed;
         Debug.Log("Exiting Power State");
     }
 
@@ -48,7 +51,7 @@ public class PowerState : IState
         HealthComponent healthComponent = enemyObject.GetComponent<HealthComponent>();
         if (healthComponent != null)
         {
-            _turn.ResolveDamage(healthComponent, 1);
+            _turn.EndTurn(healthComponent, 1);
         }
     }
 

@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45f71235d4d33d34b948f296106fb052, type: 3}
   m_Name: BattleInventory
   m_EditorClassIdentifier: Assembly-CSharp::BattleInventory
-  selectedStick: {fileID: 0}
+  selectedStick: {fileID: 11400000, guid: 461010b640e2dfc44b0606d848741923, type: 2}
   selectedSkills:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  usableItems: []
+  - {fileID: 11400000, guid: 075da476eff6d8340830c8a1f7f12a9b, type: 2}
+  - {fileID: 11400000, guid: db7bc730d51810a44aae245daf9926bf, type: 2}
+  - {fileID: 11400000, guid: 4390e911757fed5478aa80fea52e01d3, type: 2}

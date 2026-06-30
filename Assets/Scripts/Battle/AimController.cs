@@ -5,17 +5,17 @@ public class AimController : MonoBehaviour
 {
     [SerializeField] private float castRadius = 3f;
     [SerializeField] private Transform targetIndicator;
-    [SerializeField] private Collider ownerCollider; // Collider of the character using this controller
-    [SerializeField] private Transform targetCharacter; // The character to aim relative to
-    [SerializeField] private bool useMouseInput = true; // Toggle for player vs AI control
+    [SerializeField] private Collider ownerCollider;
+    [SerializeField] private Transform targetCharacter;
+    [SerializeField] private bool useMouseInput = true;
     public LayerMask groundLayer;
 
     private bool isAiming = false;
     private Camera mainCam;
-    private Vector3 externalAimDirection = Vector3.zero; // For AI-driven aiming
+    private Vector3 externalAimDirection = Vector3.zero;
 
     public event Action OnStopAiming;
-    public event Action OnAimPositionUpdated; // Triggered when targetIndicator position changes
+    public event Action OnAimPositionUpdated;
 
     private void Start()
     {
@@ -55,8 +55,8 @@ public class AimController : MonoBehaviour
         {
             StopAiming();
         }
-        
-        if(!useMouseInput)
+
+        if (!useMouseInput)
         {
             StopAiming();
         }
@@ -136,10 +136,10 @@ public class AimController : MonoBehaviour
     public Vector3[] GetEdgePoints(int numberOfPoints)
     {
         // Safety check to prevent dividing by zero later
-        if (numberOfPoints < 2) numberOfPoints = 2; 
+        if (numberOfPoints < 2) numberOfPoints = 2;
 
         Vector3[] edgePoints = new Vector3[numberOfPoints];
-        
+
         if (targetCharacter == null || ownerCollider == null) return edgePoints; // Return empty if missing data
 
         // 1. Get the direction to the target
@@ -156,7 +156,7 @@ public class AimController : MonoBehaviour
         {
             // Calculate a percentage from 0 to 1 (0 is far left, 1 is far right)
             float t = (float)i / (numberOfPoints - 1);
-            
+
             // Map that percentage to an angle between -90 (Left) and 90 (Right)
             float angle = Mathf.Lerp(-90f, 90f, t);
 
@@ -169,7 +169,7 @@ public class AimController : MonoBehaviour
 
             edgePoints[i] = surfacePoint + (sweepDirection * castRadius);
         }
-    
+
         return edgePoints;
     }
 
@@ -188,18 +188,16 @@ public class AimController : MonoBehaviour
         OnStopAiming?.Invoke();
     }
 
-    /// <summary>
-    /// Set the target character for aiming calculations.
-    /// </summary>
-    public void SetTarget(Transform target)
+    public void SetTargetIndicator(Transform target)
+    {
+        targetIndicator = target;
+    }
+
+    public void SetTargetCharacter(Transform target)
     {
         targetCharacter = target;
     }
 
-    /// <summary>
-    /// Set aim direction externally (for AI-controlled aiming).
-    /// Only works when useMouseInput is false.
-    /// </summary>
     public void SetAimDirection(Vector3 direction)
     {
         if (!useMouseInput)
@@ -208,9 +206,6 @@ public class AimController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Switch between mouse input (player) and external input (AI).
-    /// </summary>
     public void SetUseMouseInput(bool useMouse)
     {
         useMouseInput = useMouse;
