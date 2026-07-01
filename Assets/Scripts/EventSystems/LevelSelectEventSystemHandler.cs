@@ -25,6 +25,7 @@ public class LevelSelectEventSystemHandler : DynamicEventSystemHandler
         base.OnSelect(eventData);
 
         _image = eventData.selectedObject.GetComponent<Image>();
+
         _levelButton = eventData.selectedObject.GetComponent<LevelButton>();
         if (_levelButton != null)
         {
@@ -34,10 +35,8 @@ public class LevelSelectEventSystemHandler : DynamicEventSystemHandler
 
             if (_initialMoveComplete)
             {
-                _levelSelectManager.MovePlayerToButton(_levelSelectManager.PlayerObj, rectTrans, _levelSelectManager.WorldSpaceCanvasRect);
-            }
-            else
-            {
+                _levelSelectManager.MovePlayerToButton(_levelSelectManager.PlayerObj,rectTrans,_levelSelectManager.WorldSpaceCanvasRect);
+
                 _initialMoveComplete = true;
             }
 
