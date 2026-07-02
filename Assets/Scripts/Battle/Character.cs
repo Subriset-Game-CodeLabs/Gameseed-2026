@@ -52,6 +52,8 @@ public class Character : MonoBehaviour
         _characterData = characterData;
         _characterHand = characterHand;
 
+        _healthComponent.Initialize(_characterData.MaxHP);
+
         if (_ownerTag == "Player")
         {
             _aimController.SetUseMouseInput(true);

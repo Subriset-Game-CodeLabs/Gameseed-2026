@@ -14,6 +14,7 @@ public class ShopManager : MonoBehaviour
 
     [Header("Scene Settings")]
     [SerializeField] private string battleSceneName = "BattleScene";
+    [SerializeField] private string closeSceneName = "BattleScene";
     [SerializeField] private int battleSceneIndex = -1;
 
     // Auto-wired references
@@ -491,7 +492,7 @@ public class ShopManager : MonoBehaviour
     public void CloseShop()
     {
         if (shopPanel != null)
-            shopPanel.SetActive(false);
+            SceneManager.LoadScene(closeSceneName);
     }
 
     private void UpdateStartButton()

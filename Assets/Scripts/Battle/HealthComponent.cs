@@ -3,19 +3,27 @@ using UnityEngine;
 
 public class HealthComponent : MonoBehaviour
 {
-    [SerializeField]
     private int _maxHP;
     private int _currentHP;
     private bool isAlive = true;
 
-    void Start()
+    public int CurrentHP => _currentHP;
+    public int MaxHP => _maxHP;
+
+    public event Action OnHealthChanged;
+
+    public void Initialize(int maxHP)
     {
+        _maxHP = maxHP;
         _currentHP = _maxHP;
+        isAlive = true;
+        OnHealthChanged?.Invoke();
     }
 
     public void TakeDamage(int damage)
     {
         _currentHP -= damage;
+        OnHealthChanged?.Invoke();
         Debug.Log(transform.name + " Take " + damage + " Damage");
         if (_currentHP <= 0)
         {

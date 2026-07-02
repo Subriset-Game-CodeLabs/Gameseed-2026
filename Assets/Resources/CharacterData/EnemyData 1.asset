@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   CharacterName: 
   CharacterSmashPower: 25
+  MaxHP: 3
   BattleInventory: {fileID: 11400000, guid: af04f0183168c114eb7726bd53961619, type: 2}

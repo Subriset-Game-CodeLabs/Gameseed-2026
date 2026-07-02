@@ -72,8 +72,8 @@ public class BattleInventory : ScriptableObject
                 writeIdx++;
             }
         }
-        for (int i = 0; i < 3; i++)
-            selectedSkills[i] = temp[i];
+        for (int i = 0; i < 1; i++)
+                selectedSkills[i] = temp[i];
     }
 
     public int GetSkillIndex(SkillItem skill)

@@ -1,41 +1,71 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class HealthUI : MonoBehaviour
 {
-    [SerializeField] private List<GameObject> healthIndicators = new List<GameObject>();
-    [SerializeField] private int currentHP;
-    [SerializeField] private int maxHP = 5;
+    [SerializeField] private GameObject healthIndicatorPrefab;
+    [SerializeField] private Transform healthIndicatorParent;
 
-    private void Start()
+    private readonly List<GameObject> _healthIndicators = new List<GameObject>();
+    private HealthComponent _healthComponent;
+
+    public void Initialize(HealthComponent healthComponent)
     {
-        // Initialize with all indicators active
-        currentHP = maxHP;
+        _healthComponent = healthComponent;
+
+        ClearIndicators();
+        SpawnIndicators(_healthComponent.MaxHP);
+
+        _healthComponent.OnHealthChanged += UpdateHealthUI;
         UpdateHealthUI();
+
+        StartCoroutine(DisableLayoutAfterFrame());
     }
 
-    public void SetHP(int hp)
+    private System.Collections.IEnumerator DisableLayoutAfterFrame()
     {
-        currentHP = Mathf.Clamp(hp, 0, maxHP);
-        UpdateHealthUI();
+        yield return null;
+
+        var layoutGroup = GetComponent<HorizontalLayoutGroup>();
+        if (layoutGroup != null)
+            layoutGroup.enabled = false;
     }
 
-    public void TakeDamage(int damage)
+    private void SpawnIndicators(int count)
     {
-        SetHP(currentHP - damage);
+        // Transform parent = healthIndicatorParent != null ? healthIndicatorParent : transform;
+
+        for (int i = 0; i < count; i++)
+        {
+            GameObject indicator = Instantiate(healthIndicatorPrefab, transform);
+            _healthIndicators.Add(indicator);
+        }
+
     }
 
-    public void Heal(int amount)
+    private void ClearIndicators()
     {
-        SetHP(currentHP + amount);
+        foreach (var indicator in _healthIndicators)
+        {
+            if (indicator != null)
+                Destroy(indicator);
+        }
+        _healthIndicators.Clear();
+    }
+
+    private void OnDestroy()
+    {
+        if (_healthComponent != null)
+            _healthComponent.OnHealthChanged -= UpdateHealthUI;
     }
 
     private void UpdateHealthUI()
     {
-        for (int i = 0; i < healthIndicators.Count; i++)
+        for (int i = 0; i < _healthIndicators.Count; i++)
         {
             // Deactivate indicators beyond current HP
-            healthIndicators[i].SetActive(i < currentHP);
+            _healthIndicators[i].SetActive(i < _healthComponent.CurrentHP);
         }
     }
 

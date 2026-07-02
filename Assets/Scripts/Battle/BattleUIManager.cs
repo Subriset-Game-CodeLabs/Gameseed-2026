@@ -121,6 +121,12 @@ public class BattleUIManager : MonoBehaviour
         });
     }
 
+    public void SetupHealthUI(HealthComponent playerHealth, HealthComponent enemyHealth)
+    {
+        _playerHealthUI.Initialize(playerHealth);
+        _enemyHealthUI.Initialize(enemyHealth);
+    }
+
     private void OnItemPressedUI(BaseItem item)
     {
         OnItemPressed?.Invoke(item);
@@ -155,21 +161,7 @@ public class BattleUIManager : MonoBehaviour
         StopBlinking();
     }
 
-    public void PlayerTakeDamage(int damage)
-    {
-        if (_playerHealthUI != null)
-        {
-            _playerHealthUI.TakeDamage(damage);
-        }
-    }
 
-    public void EnemyTakeDamage(int damage)
-    {
-        if (_enemyHealthUI != null)
-        {
-            _enemyHealthUI.TakeDamage(damage);
-        }
-    }
 
     public void PlayerUseEnergy(int amount)
     {

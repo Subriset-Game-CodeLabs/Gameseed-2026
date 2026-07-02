@@ -28,15 +28,6 @@ public class ResolveTurnState : IState
         {
             _targetHealth.TakeDamage(_damageAmount);
 
-            if (_isEnemyTurn)
-            {
-                _battleUiManager.PlayerTakeDamage(_damageAmount);
-            }
-            else
-            {
-                _battleUiManager.EnemyTakeDamage(_damageAmount);
-            }
-
             if (CheckWinCondition())
             {
                 return;

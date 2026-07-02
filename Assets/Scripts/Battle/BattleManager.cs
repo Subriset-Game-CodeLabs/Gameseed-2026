@@ -84,6 +84,8 @@ public class BattleManager : MonoBehaviour
         _playerCharacter.SetupComponents(GameManager.Instance.PlayerCharacter, _enemyCharacter, _playerHands);
         _enemyCharacter.SetupComponents(GameManager.Instance.EnemyCharacter, _playerCharacter, _enemyHands);
 
+        _battleUIManager.SetupHealthUI(_playerCharacter.HealthComponent, _enemyCharacter.HealthComponent);
+
         _battleUIManager.SetupSkillsUI(_playerCharacter.SkillComponent.CharacterSkill, _enemyCharacter.SkillComponent.CharacterSkill);
 
         _battleUIManager.SetupItemUI();
