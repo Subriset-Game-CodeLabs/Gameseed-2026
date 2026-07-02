@@ -25,6 +25,7 @@ public class LevelData : ScriptableObject
 
   public CharacterData EnemyData;
   public LevelData NextLevelData;
+  public GameObject LevelPrefab;
 
   public GameObject LevelButtonObj { get; set; }
 }

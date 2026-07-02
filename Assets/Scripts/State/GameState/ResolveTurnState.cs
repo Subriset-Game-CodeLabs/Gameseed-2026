@@ -8,6 +8,7 @@ public class ResolveTurnState : IState
     private HealthComponent _targetHealth;
     private int _damageAmount;
     private bool _isEnemyTurn;
+    private int _currentTurn = 1;
 
     public ResolveTurnState(BattleManager battleManager, BattleUIManager battleUIManager)
     {
@@ -24,6 +25,8 @@ public class ResolveTurnState : IState
 
     public void OnEnter()
     {
+        _currentTurn += 1;
+
         if (_targetHealth != null)
         {
             _targetHealth.TakeDamage(_damageAmount);
@@ -52,6 +55,7 @@ public class ResolveTurnState : IState
         {
             if (_battleManager.PlayerCharacter.IsSkipped)
             {
+                _currentTurn += 1;
                 _battleManager.BattleStateMachine.ChangeState(_battleManager.EnemyTurnState);
             }
             else
@@ -63,6 +67,7 @@ public class ResolveTurnState : IState
         {
             if (_battleManager.EnemyCharacter.IsSkipped)
             {
+                _currentTurn += 1;
                 _battleManager.BattleStateMachine.ChangeState(_battleManager.PlayerTurnState);
             }
             else
@@ -105,14 +110,28 @@ public class ResolveTurnState : IState
     public void OnExit()
     {
         _targetHealth = null;
+        Debug.Log(_currentTurn);
+
+        if (_currentTurn % 2 == 0)
+        {
+            _battleManager.PlayerCharacter.SkillComponent.TickCooldowns();
+            _battleManager.EnemyCharacter.SkillComponent.TickCooldowns();
+
+            _battleManager.UpdateCooldownUIPlayer();
+            _battleManager.UpdateCooldownUIEnemy();
+
+            _battleManager.PlayerCharacter.SkillComponent.AddEnergy(1);
+            _battleManager.EnemyCharacter.SkillComponent.AddEnergy(1);
+
+            _battleManager.PlayerCharacter.ResetStats();
+            _battleManager.EnemyCharacter.ResetStats();
+        }
+
         _battleManager.PlayerCharacter.ClearStatus();
         _battleManager.EnemyCharacter.ClearStatus();
 
-        _battleManager.PlayerCharacter.SkillComponent.TickCooldowns();
-        _battleManager.EnemyCharacter.SkillComponent.TickCooldowns();
 
-        _battleManager.UpdateCooldownUIPlayer();
-        _battleManager.UpdateCooldownUIEnemy();
+
         Debug.Log("Exiting Resolve Turn State");
     }
 }

@@ -4,24 +4,21 @@ using UnityEngine;
 
 public class SkillComponent : MonoBehaviour
 {
-    [SerializeField]
     private int _maxEnergy;
     private int _currentEnergy;
     private SkillInstance[] _usableSkills;
     public SkillInstance[] CharacterSkill => _usableSkills;
 
+    public int CurrentEnergy => _currentEnergy;
+    public int MaxEnergy => _maxEnergy;
+
     public event Action<SkillInstance> OnSkillUsedSuccess;
     public event Action<string> OnSkillUsedFailed;
     public event Action<int> OnEnergyIncreased;
 
-    void Start()
-    {
-        _currentEnergy = _maxEnergy;
-    }
-
     public void AddEnergy(int value)
     {
-        _currentEnergy = Mathf.Clamp(value, 0, _maxEnergy);
+        _currentEnergy = Mathf.Clamp(_currentEnergy + value, 0, _maxEnergy);
         OnEnergyIncreased?.Invoke(value);
     }
 
@@ -48,8 +45,10 @@ public class SkillComponent : MonoBehaviour
         OnSkillUsedSuccess?.Invoke(useSkill);
     }
 
-    public void Initialize(SkillItem[] selectedSkills)
+    public void Initialize(int maxEnergy, SkillItem[] selectedSkills)
     {
+        _maxEnergy = maxEnergy;
+        _currentEnergy = _maxEnergy;
         _usableSkills = selectedSkills
             .Select(skill => new SkillInstance { Data = skill, remainingCooldown = 1 })
             .ToArray();

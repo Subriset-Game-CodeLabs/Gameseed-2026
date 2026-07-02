@@ -27,3 +27,4 @@ MonoBehaviour:
     Amount: 5
   EnemyData: {fileID: 11400000, guid: a579d1f38a02a414eb9ae23686a9b260, type: 2}
   NextLevelData: {fileID: 11400000, guid: 81cac6d3d2a3e4f4c818978b7397f9ea, type: 2}
+  LevelPrefab: {fileID: 7578601654411432466, guid: c8ec20bce79eaa546a029273e5acee61, type: 3}

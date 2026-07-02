@@ -23,3 +23,5 @@ MonoBehaviour:
   EnemySprite: {fileID: 0}
   Rewards: []
   EnemyData: {fileID: 11400000, guid: 734b8c03cb093c849a6b6b6f2d40a334, type: 2}
+  NextLevelData: {fileID: 0}
+  LevelPrefab: {fileID: 7578601654411432466, guid: c8ec20bce79eaa546a029273e5acee61, type: 3}

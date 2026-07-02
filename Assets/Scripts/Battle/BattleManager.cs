@@ -76,6 +76,11 @@ public class BattleManager : MonoBehaviour
         var playerPrefab = GameManager.Instance.PlayerCharacter.BattleInventory.selectedStick.stickPrefab;
         var enemyPrefab = GameManager.Instance.EnemyCharacter.BattleInventory.selectedStick.stickPrefab;
 
+        var mapPrefab = GameManager.Instance.LevelData.LevelPrefab;
+
+        GameObject map = Instantiate(mapPrefab);
+        map.transform.position = Vector3.zero;
+
         var (player, enemy) = _spawnManager.SpawnUnit(playerPrefab, enemyPrefab);
 
         _playerCharacter = player.GetComponent<Character>();
@@ -85,13 +90,13 @@ public class BattleManager : MonoBehaviour
         _enemyCharacter.SetupComponents(GameManager.Instance.EnemyCharacter, _playerCharacter, _enemyHands);
 
         _battleUIManager.SetupHealthUI(_playerCharacter.HealthComponent, _enemyCharacter.HealthComponent);
+        _battleUIManager.SetupEnergyUI(_playerCharacter.SkillComponent, _enemyCharacter.SkillComponent);
 
         _battleUIManager.SetupSkillsUI(_playerCharacter.SkillComponent.CharacterSkill, _enemyCharacter.SkillComponent.CharacterSkill);
 
         _battleUIManager.SetupItemUI();
 
         _playerCharacter.SkillComponent.OnSkillUsedSuccess += OnPlayerSkillUsedSuccess;
-        _playerCharacter.SkillComponent.OnEnergyIncreased += OnEnergyIncreased;
 
         int playerGoesFirst = PlayerPrefs.GetInt("PlayerGoesFirst");
 
@@ -110,15 +115,9 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    private void OnEnergyIncreased(int value)
-    {
-        _battleUIManager.PlayerRecoverEnergy(value);
-    }
-
     private void OnPlayerSkillUsedSuccess(SkillInstance skill)
     {
         _battleUIManager.PlayFadeSequence("Player use " + skill.Data.name + " skill");
-        _battleUIManager.PlayerUseEnergy(skill.Data.manaCost);
         _battleUIManager.UpdateSkillUICooldown(skill, true);
     }
 

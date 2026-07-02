@@ -4,36 +4,41 @@ using UnityEngine;
 public class EnergyUI : MonoBehaviour
 {
     [SerializeField] private List<GameObject> _energyIndicators = new List<GameObject>();
-    [SerializeField] private int _currentEnergy;
-    [SerializeField] private int _maxEnergy = 5;
 
-    private void Start()
+    private SkillComponent _skillComponent;
+
+    public void Initialize(SkillComponent skillComponent)
     {
-        _currentEnergy = _maxEnergy;
+        _skillComponent = skillComponent;
+        _skillComponent.OnEnergyIncreased += OnEnergyChanged;
+        _skillComponent.OnSkillUsedSuccess += OnSkillUsed;
         UpdateEnergyUI();
     }
 
-    public void SetEnergy(int energy)
+    private void OnEnergyChanged(int value)
     {
-        _currentEnergy = Mathf.Clamp(energy, 0, _maxEnergy);
         UpdateEnergyUI();
     }
 
-    public void UseEnergy(int amount)
+    private void OnSkillUsed(SkillInstance skill)
     {
-        SetEnergy(_currentEnergy - amount);
+        UpdateEnergyUI();
     }
 
-    public void RecoverEnergy(int amount)
+    private void OnDestroy()
     {
-        SetEnergy(_currentEnergy + amount);
+        if (_skillComponent != null)
+        {
+            _skillComponent.OnEnergyIncreased -= OnEnergyChanged;
+            _skillComponent.OnSkillUsedSuccess -= OnSkillUsed;
+        }
     }
 
     private void UpdateEnergyUI()
     {
         for (int i = 0; i < _energyIndicators.Count; i++)
         {
-            _energyIndicators[i].SetActive(i < _currentEnergy);
+            _energyIndicators[i].SetActive(i < _skillComponent.CurrentEnergy);
         }
     }
 }

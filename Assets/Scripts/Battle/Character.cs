@@ -66,7 +66,7 @@ public class Character : MonoBehaviour
         _aimController.SetTargetCharacter(opponentCharacter.transform);
         _characterHand.SetTargetIndicator(transform);
 
-        _skillComponent.Initialize(_characterData.BattleInventory.selectedSkills);
+        _skillComponent.Initialize(_characterData.MaxEnergy, _characterData.BattleInventory.selectedSkills);
 
         _originalCharacterPosition = transform.position;
         _originalCharacterRotation = transform.rotation;
@@ -109,6 +109,10 @@ public class Character : MonoBehaviour
     {
         _activeStatus.Clear();
         IsSkipped = false;
+    }
+
+    public void ResetStats()
+    {
         CharacterPower = _characterData.CharacterSmashPower;
     }
 

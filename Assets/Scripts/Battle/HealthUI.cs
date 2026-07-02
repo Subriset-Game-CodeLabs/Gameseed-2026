@@ -5,8 +5,6 @@ using UnityEngine.UI;
 public class HealthUI : MonoBehaviour
 {
     [SerializeField] private GameObject healthIndicatorPrefab;
-    [SerializeField] private Transform healthIndicatorParent;
-
     private readonly List<GameObject> _healthIndicators = new List<GameObject>();
     private HealthComponent _healthComponent;
 

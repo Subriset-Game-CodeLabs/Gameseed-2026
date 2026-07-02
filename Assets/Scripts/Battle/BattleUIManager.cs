@@ -163,28 +163,10 @@ public class BattleUIManager : MonoBehaviour
 
 
 
-    public void PlayerUseEnergy(int amount)
+    public void SetupEnergyUI(SkillComponent playerSkillComponent, SkillComponent enemySkillComponent)
     {
-        if (_playerEnergyUI != null)
-        {
-            _playerEnergyUI.UseEnergy(amount);
-        }
-    }
-
-    public void EnemyUseEnergy(int amount)
-    {
-        if (_enemyEnergyUI != null)
-        {
-            _enemyEnergyUI.UseEnergy(amount);
-        }
-    }
-
-    public void PlayerRecoverEnergy(int amount)
-    {
-        if (_playerEnergyUI != null)
-        {
-            _playerEnergyUI.RecoverEnergy(amount);
-        }
+        _playerEnergyUI.Initialize(playerSkillComponent);
+        _enemyEnergyUI.Initialize(enemySkillComponent);
     }
 
     public void PlayFadeSequence(string text, Action onComplete = null)

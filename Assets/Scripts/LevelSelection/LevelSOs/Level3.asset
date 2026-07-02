@@ -24,3 +24,4 @@ MonoBehaviour:
   Rewards: []
   EnemyData: {fileID: 11400000, guid: b3cf0b796d8a1e243a71e571e9be92c2, type: 2}
   NextLevelData: {fileID: 11400000, guid: 6acf98b598b37ed4893c24cf873e3193, type: 2}
+  LevelPrefab: {fileID: 7555241264625035785, guid: 070f87c85e2bde34ea88e56771f05ccc, type: 3}

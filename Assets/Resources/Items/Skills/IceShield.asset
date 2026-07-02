@@ -19,5 +19,8 @@ MonoBehaviour:
   category: 1
   itemType: 0
   cooldown: 5
-  manaCost: 30
+  manaCost: 1
   skillEffectPrefab: {fileID: 0}
+  targetType: 0
+  effects:
+  - {fileID: 11400000, guid: 49632f37671a18d449f86922bc6813ff, type: 2}
