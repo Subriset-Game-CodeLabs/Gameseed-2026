@@ -18,14 +18,14 @@ public class ShopManager : MonoBehaviour
     [SerializeField] private int battleSceneIndex = -1;
 
     // Auto-wired references
-    private Transform categoryButtonParent;
-    private Transform itemGridParent;
-    private GameObject itemSlotPrefab;
-    private ShopItemDetail itemDetail;
-    private TextMeshProUGUI moneyLabel;
-    private Button closeButton;
-    private Button startButton;
-    private GameObject shopPanel;
+    [SerializeField] private Transform categoryButtonParent;
+    [SerializeField] private Transform itemGridParent;
+    [SerializeField] private GameObject itemSlotPrefab;
+    [SerializeField] private ShopItemDetail itemDetail;
+    [SerializeField] private TextMeshProUGUI moneyLabel;
+    [SerializeField] private Button closeButton;
+    [SerializeField] private Button startButton;
+    [SerializeField] private GameObject shopPanel;
 
     // Equipment slots (bottom bar)
     private EquipmentSlot stickSlot;
