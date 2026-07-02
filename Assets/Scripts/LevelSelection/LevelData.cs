@@ -23,5 +23,8 @@ public class LevelData : ScriptableObject
   public Sprite EnemySprite;
   public List<RewardData> Rewards;
 
+  public CharacterData EnemyData;
+  public LevelData NextLevelData;
+
   public GameObject LevelButtonObj { get; set; }
 }
