@@ -58,8 +58,16 @@ public class LevelSelectManager : MonoBehaviour
         {
             if (level.IsUnlockedByDefault)
             {
+                Debug.Log("added defaultLevel");
                 UnlockedLevelIDs.Add(level.LevelID);
+                GameManager.Instance.AddUnlockedLevel(level);
             }
+        }
+
+        foreach (var item in GameManager.Instance.UnlockedLevel)
+        {
+            if (!UnlockedLevelIDs.Contains(item.LevelID))
+                UnlockedLevelIDs.Add(item.LevelID);
         }
     }
 
@@ -87,10 +95,10 @@ public class LevelSelectManager : MonoBehaviour
             if (i > 0)
             {
                 LineRenderer line = Instantiate(LinePrefab, LevelParent);
-    
+
                 line.transform.SetSiblingIndex(0);
                 LineRendererConnector lineConnector = line.GetComponent<LineRendererConnector>();
-                lineConnector.StartRectTrans = CurrentArea.Levels[i-1].LevelButtonObj.GetComponent<RectTransform>();
+                lineConnector.StartRectTrans = CurrentArea.Levels[i - 1].LevelButtonObj.GetComponent<RectTransform>();
                 lineConnector.EndRectTrans = buttonGO.GetComponent<RectTransform>();
 
                 StartCoroutine(DelayedLineSetup(lineConnector));
@@ -289,7 +297,7 @@ public class LevelSelectManager : MonoBehaviour
 
         if (_buttonObjects.Count > 1)
         {
-            Vector3 secondWorldPosition = UIToWorldPosition(_buttonObjects[1].GetComponent<RectTransform>(),worldSpaceUIObject);
+            Vector3 secondWorldPosition = UIToWorldPosition(_buttonObjects[1].GetComponent<RectTransform>(), worldSpaceUIObject);
             CheckForRightOrLeftTurn(PlayerObj, ref _playerIsFacingRight, secondWorldPosition);
         }
     }

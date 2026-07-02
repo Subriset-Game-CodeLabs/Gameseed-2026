@@ -51,6 +51,7 @@ public class BattleManager : MonoBehaviour
     public void UpdateBattleResult(BattleResult result)
     {
         _battleResult = result;
+        ShowGameResult();
     }
 
     public void ShowGameResult()
@@ -58,8 +59,11 @@ public class BattleManager : MonoBehaviour
         switch (_battleResult)
         {
             case BattleResult.PlayerWin:
+                _battleUIManager.ShowWinPanel();
+                GameManager.Instance.PlayerWin();
                 break;
             case BattleResult.PlayerLose:
+                _battleUIManager.ShowLosePanel();
                 break;
             default:
                 break;

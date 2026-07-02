@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 8689464672698324563}
   - component: {fileID: 5865666189349385199}
   m_Layer: 0
-  m_Name: NormalStick
+  m_Name: Stik kayu
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -72,6 +72,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f61eeeed9f098ab428a5ee507899f891, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Character
+  IsSkipped: 0
+  CharacterPower: 0
 --- !u!114 &6449116648451018473
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -146,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bc8b50ef67daf54fa39ab1ba213591b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HealthComponent
-  _maxHP: 3
+  _maxHP: 1
 --- !u!114 &5865666189349385199
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -13,7 +13,7 @@ public class ShopManager : MonoBehaviour
     [SerializeField] private BattleInventory battleInventory;
 
     [Header("Scene Settings")]
-    [SerializeField] private string battleSceneName = "Battle";
+    [SerializeField] private string battleSceneName = "BattleScene";
     [SerializeField] private int battleSceneIndex = -1;
 
     // Auto-wired references

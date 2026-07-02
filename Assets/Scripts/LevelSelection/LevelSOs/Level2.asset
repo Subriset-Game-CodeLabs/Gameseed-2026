@@ -15,9 +15,12 @@ MonoBehaviour:
   LevelID: 2
   IsUnlockedByDefault: 0
   Scene:
-    m_SceneAsset: {fileID: 102900000, guid: b81f6a5f93afa554ca1fe6c129240614, type: 3}
-    m_SceneName: MisalnyaStage
+    m_SceneAsset: {fileID: 102900000, guid: e1d2fbf2dbec00649b23893fe7156ad5, type: 3}
+    m_SceneName: InventoryScene
   LevelName: Lawan Isan
+  LevelOverview: {fileID: 0}
   Description: level kedua
   EnemySprite: {fileID: 0}
   Rewards: []
+  EnemyData: {fileID: 11400000, guid: 7810635e39370d74192c8535ffa57d31, type: 2}
+  NextLevelData: {fileID: 11400000, guid: e3ca7fcbdff19f540ae4c67acfff5c70, type: 2}

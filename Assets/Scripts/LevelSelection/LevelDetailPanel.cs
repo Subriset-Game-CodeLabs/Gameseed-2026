@@ -98,6 +98,7 @@ public class LevelDetailPanel : MonoBehaviour
     private void OnProceedClicked()
     {
         if (_currentLevel == null) return;
+        GameManager.Instance.SetLevelData(_currentLevel);
         SceneManager.LoadScene(_currentLevel.Scene);
     }
 }

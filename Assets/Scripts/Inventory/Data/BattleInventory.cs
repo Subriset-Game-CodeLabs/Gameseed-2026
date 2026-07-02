@@ -39,7 +39,7 @@ public class BattleInventory : ScriptableObject
 
     public bool AreAllSkillsSelected()
     {
-        return GetSelectedSkillCount() >= 3;
+        return GetSelectedSkillCount() == 1;
     }
 
     public int AddSkill(SkillItem skill)
