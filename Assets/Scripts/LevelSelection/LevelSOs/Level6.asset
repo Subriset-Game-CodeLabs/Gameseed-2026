@@ -18,3 +18,6 @@ MonoBehaviour:
     m_SceneAsset: {fileID: 102900000, guid: b81f6a5f93afa554ca1fe6c129240614, type: 3}
     m_SceneName: MisalnyaStage
   LevelName: Lawan Lintar
+  Description: 
+  EnemySprite: {fileID: 0}
+  Rewards: []

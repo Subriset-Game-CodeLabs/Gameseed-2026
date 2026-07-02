@@ -15,6 +15,11 @@ MonoBehaviour:
   LevelID: 4
   IsUnlockedByDefault: 0
   Scene:
-    m_SceneAsset: {fileID: 102900000, guid: b81f6a5f93afa554ca1fe6c129240614, type: 3}
-    m_SceneName: MisalnyaStage
+    m_SceneAsset: {fileID: 102900000, guid: e1d2fbf2dbec00649b23893fe7156ad5, type: 3}
+    m_SceneName: InventoryScene
   LevelName: Lawan Rava
+  LevelOverview: {fileID: 0}
+  Description: 
+  EnemySprite: {fileID: 0}
+  Rewards: []
+  EnemyData: {fileID: 11400000, guid: 734b8c03cb093c849a6b6b6f2d40a334, type: 2}

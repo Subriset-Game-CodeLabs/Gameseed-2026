@@ -230,4 +230,9 @@ public class BattleUIManager : MonoBehaviour
         fadeSequence.OnComplete(() => onComplete?.Invoke());
 
     }
+
+    public void ShowWinPanel() => _winPanel.SetActive(true);
+    public void HideWinPanel() => _winPanel.SetActive(false);
+    public void ShowLosePanel() => _losePanel.SetActive(true);
+    public void HideLosePanel() => _losePanel.SetActive(false);
 }

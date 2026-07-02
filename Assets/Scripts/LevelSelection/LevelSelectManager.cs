@@ -19,6 +19,9 @@ public class LevelSelectManager : MonoBehaviour
     public RectTransform WorldSpaceCanvasRect;
     public Vector2 PlayerPositionOffsetPerLevel = new Vector2(0.02f, -0.5f);
 
+    [Header("Level Detail")]
+    public LevelDetailPanel DetailPanel;
+
     public HashSet<string> UnlockedLevelIDs = new HashSet<string>();
 
     private LevelSelectEventSystemHandler _eventSystemHandler;
@@ -55,8 +58,16 @@ public class LevelSelectManager : MonoBehaviour
         {
             if (level.IsUnlockedByDefault)
             {
+                Debug.Log("added defaultLevel");
                 UnlockedLevelIDs.Add(level.LevelID);
+                GameManager.Instance.AddUnlockedLevel(level);
             }
+        }
+
+        foreach (var item in GameManager.Instance.UnlockedLevel)
+        {
+            if (!UnlockedLevelIDs.Contains(item.LevelID))
+                UnlockedLevelIDs.Add(item.LevelID);
         }
     }
 
@@ -73,7 +84,7 @@ public class LevelSelectManager : MonoBehaviour
             CurrentArea.Levels[i].LevelButtonObj = buttonGO;
 
             LevelButton levelButton = buttonGO.GetComponent<LevelButton>();
-            levelButton.Setup(CurrentArea.Levels[i], UnlockedLevelIDs.Contains(CurrentArea.Levels[i].LevelID));
+            levelButton.Setup(CurrentArea.Levels[i], UnlockedLevelIDs.Contains(CurrentArea.Levels[i].LevelID), DetailPanel);
 
             // populate the selectables for the event system
             Selectable selectable = buttonGO.GetComponent<Selectable>();
@@ -87,7 +98,7 @@ public class LevelSelectManager : MonoBehaviour
 
                 line.transform.SetSiblingIndex(0);
                 LineRendererConnector lineConnector = line.GetComponent<LineRendererConnector>();
-                lineConnector.StartRectTrans = CurrentArea.Levels[i-1].LevelButtonObj.GetComponent<RectTransform>();
+                lineConnector.StartRectTrans = CurrentArea.Levels[i - 1].LevelButtonObj.GetComponent<RectTransform>();
                 lineConnector.EndRectTrans = buttonGO.GetComponent<RectTransform>();
 
                 StartCoroutine(DelayedLineSetup(lineConnector));
@@ -192,34 +203,102 @@ public class LevelSelectManager : MonoBehaviour
     }
     #endregion
 
+    // #region Player
+    // private IEnumerator SpawnPlayerAfterDelay(RectTransform screenSpaceUIObject, RectTransform worldSpaceUIObject)
+    // {
+    //     yield return null;
+    //     SpawnInPlayer(screenSpaceUIObject, worldSpaceUIObject);
+    // }
+
+    // private void SpawnInPlayer(RectTransform screenSpaceUIObject, RectTransform worldSpaceUIObject)
+    // {
+    //     _playerIsFacingRight = true;
+    //     PlayerObj = Instantiate(PlayerUIPrefab, worldSpaceUIObject);
+
+    //     Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(_camera, screenSpaceUIObject.position);
+    //     Vector3 worldPosition = _camera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint   .y, _camera.nearClipPlane));
+    //     worldPosition.z = worldSpaceUIObject.position.z;
+
+    //     Vector3 offsetPosition = worldPosition + (Vector3)PlayerPositionOffsetPerLevel;
+
+    //     PlayerObj.transform.position = offsetPosition;
+
+    //     if (_buttonObjects.Count > 1)
+    //     {
+    //         Vector2 secondScreenPoint = RectTransformUtility.WorldToScreenPoint(_camera, _buttonObjects[1].GetComponent<RectTransform>().position);
+    //         Vector3 secondWorldPosition = _camera.ScreenToWorldPoint(new Vector3(secondScreenPoint.x, secondScreenPoint.y, _camera.nearClipPlane));
+    //         secondWorldPosition.z = worldSpaceUIObject.position.z;
+
+    //         CheckForRightOrLeftTurn(PlayerObj, ref _playerIsFacingRight, secondWorldPosition);
+    //     }
+    // }
+
+    // private void CheckForRightOrLeftTurn(GameObject player, ref bool isFacingRight, Vector3 targetWorldPosition)
+    // {
+    //     if (isFacingRight)
+    //     {
+    //         if (targetWorldPosition.x < player.transform.position.x)
+    //         {
+    //             player.transform.Rotate(0f, 180f, 0f);
+    //             isFacingRight = false;
+    //         }
+    //     }
+    //     else
+    //     {
+    //         if (targetWorldPosition.x > player.transform.position.x)
+    //         {
+    //             player.transform.Rotate(0f, -180f, 0f);
+    //             isFacingRight = true;
+    //         }
+    //     }
+    // }
+
+    // public void MovePlayerToButton(GameObject playerUI, RectTransform targetButton, RectTransform worldSpaceUIObject)
+    // {
+    //     Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(_camera, targetButton.position);
+    //     Vector3 worldPosition = _camera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, _camera.nearClipPlane));
+    //     worldPosition.z = worldSpaceUIObject.position.z;
+
+    //     Vector3 endPosition = worldPosition + (Vector3)PlayerPositionOffsetPerLevel;    
+
+    //     CheckForRightOrLeftTurn(playerUI, ref _playerIsFacingRight, worldPosition);
+
+    //     playerUI.transform.DOMove(endPosition, 0.11f);
+    // }
+    // #endregion
+
     #region Player
     private IEnumerator SpawnPlayerAfterDelay(RectTransform screenSpaceUIObject, RectTransform worldSpaceUIObject)
     {
-        yield return null;
+        yield return new WaitForEndOfFrame();
         SpawnInPlayer(screenSpaceUIObject, worldSpaceUIObject);
+    }
+
+    private Vector3 UIToWorldPosition(RectTransform screenSpaceRect, RectTransform worldSpaceCanvasRect)
+    {
+        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(_camera, screenSpaceRect.position);
+        RectTransformUtility.ScreenPointToWorldPointInRectangle(worldSpaceCanvasRect, screenPoint, _camera, out Vector3 worldPoint);
+        return worldPoint;
     }
 
     private void SpawnInPlayer(RectTransform screenSpaceUIObject, RectTransform worldSpaceUIObject)
     {
         _playerIsFacingRight = true;
-
         PlayerObj = Instantiate(PlayerUIPrefab, worldSpaceUIObject);
 
-        Vector2 screenPosition = RectTransformUtility.WorldToScreenPoint(_camera, screenSpaceUIObject.position);
-        Vector3 worldPosition = _camera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, _camera.nearClipPlane));
-        worldPosition.z = worldSpaceUIObject.position.z;
+        Vector3 worldPosition = UIToWorldPosition(screenSpaceUIObject, worldSpaceUIObject);
 
-        Vector3 offsetPosition = worldPosition + (Vector3)PlayerPositionOffsetPerLevel;
-
+        Vector3 offsetPosition = worldPosition + new Vector3(
+            PlayerPositionOffsetPerLevel.x,
+            PlayerPositionOffsetPerLevel.y,
+            0f
+        );
         PlayerObj.transform.position = offsetPosition;
 
         if (_buttonObjects.Count > 1)
         {
-            Vector2 secondScreenPoint = RectTransformUtility.WorldToScreenPoint(_camera,_buttonObjects[1].GetComponent<RectTransform>().position);
-            Vector3 secondWorldPoint = _camera.ScreenToWorldPoint(new Vector3(secondScreenPoint.x, secondScreenPoint.y, _camera.nearClipPlane));
-            secondWorldPoint.z = worldSpaceUIObject.position.z;
-
-            CheckForRightOrLeftTurn(PlayerObj, ref _playerIsFacingRight, secondWorldPoint);
+            Vector3 secondWorldPosition = UIToWorldPosition(_buttonObjects[1].GetComponent<RectTransform>(), worldSpaceUIObject);
+            CheckForRightOrLeftTurn(PlayerObj, ref _playerIsFacingRight, secondWorldPosition);
         }
     }
 
@@ -245,14 +324,15 @@ public class LevelSelectManager : MonoBehaviour
 
     public void MovePlayerToButton(GameObject playerUI, RectTransform targetButton, RectTransform worldSpaceUIObject)
     {
-        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(_camera, targetButton.position);
-        Vector3 worldPosition = _camera.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, _camera.nearClipPlane));
-        worldPosition.z = worldSpaceUIObject.position.z;
+        Vector3 worldPosition = UIToWorldPosition(targetButton, worldSpaceUIObject);
 
-        Vector3 endPosition = worldPosition + (Vector3)PlayerPositionOffsetPerLevel;
+        Vector3 endPosition = worldPosition + new Vector3(
+            PlayerPositionOffsetPerLevel.x,
+            PlayerPositionOffsetPerLevel.y,
+            0f
+        );
 
         CheckForRightOrLeftTurn(playerUI, ref _playerIsFacingRight, worldPosition);
-
         playerUI.transform.DOMove(endPosition, 0.11f);
     }
     #endregion

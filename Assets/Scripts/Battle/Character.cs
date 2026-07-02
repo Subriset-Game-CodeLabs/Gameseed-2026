@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Character : MonoBehaviour
 {
@@ -39,7 +40,10 @@ public class Character : MonoBehaviour
 
     void Start()
     {
-        CharacterPower = _characterData.CharacterSmashPower;
+        if (SceneManager.GetActiveScene().name == "BattleScene")
+        {
+            CharacterPower = _characterData.CharacterSmashPower;
+        }
     }
 
     public void SetupComponents(CharacterData characterData, Character opponentCharacter, Shockwave characterHand)
@@ -78,7 +82,7 @@ public class Character : MonoBehaviour
 
     public void UseItem(BaseItem item, Character caster, Character target)
     {
-        UsableItem usableItem = (UsableItem) item;
+        UsableItem usableItem = (UsableItem)item;
         if (InventoryManager.Instance.UseItem(usableItem))
         {
             foreach (var effect in usableItem.effects)
@@ -111,6 +115,6 @@ public class Character : MonoBehaviour
         CharacterPower *= mod.modifier;
     }
 
-    
+
 
 }

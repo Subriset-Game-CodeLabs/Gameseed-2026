@@ -46,8 +46,6 @@ public class SkillUI : MonoBehaviour
     public void UpdateUI(SkillInstance skill)
     {
         int skillIndex = Array.IndexOf(_listSkill, skill);
-        Debug.Log(skillIndex);
-        Debug.Log(_listSkill.Length);
         Button skillButton = _skillObject[skillIndex].GetComponent<Button>();
 
         if (skill.IsReady())

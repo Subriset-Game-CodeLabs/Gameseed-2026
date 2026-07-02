@@ -23,6 +23,11 @@ public class InventoryManager : PersistentSingleton<InventoryManager>
         }
     }
 
+    void Start()
+    {
+        playerInventory.ResetInventory();
+    }
+
     // Beli item
     public bool BuyItem(BaseItem item)
     {
